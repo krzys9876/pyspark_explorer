@@ -3,9 +3,6 @@ from pyspark.sql.types import StructType, StructField, StringType, Row, DateType
 
 from pyspark_explorer.data_table import DataTable
 
-def test_dummy() -> None:
-    assert True
-
 class TestDataTable:
     def test_one_simple_field(self) -> None:
         schema = [StructField("text", StringType())]
