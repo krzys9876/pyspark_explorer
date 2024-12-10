@@ -25,9 +25,15 @@ class DataTable:
         for ri,data_row in enumerate(self._data):
             row=[]
             for fi, field in enumerate(data_row.__fields__):
-                value = data_row[field]
-                display_value = str(value)
-                kind = "simple"
+                if self.columns[fi]["type"] == "ArrayType":
+                    value = data_row[field]
+                    display_value = str(value)
+                    kind = "array"
+                else:
+                    value = data_row[field]
+                    display_value = str(value)
+                    kind = "simple"
+
                 row.append({"column": self.columns[fi], "kind": kind, "display_value": display_value,
                             "value": value})
 

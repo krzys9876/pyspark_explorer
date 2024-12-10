@@ -1,5 +1,5 @@
 import pytest
-from pyspark.sql.types import StructType, StructField, StringType, Row, DateType, LongType
+from pyspark.sql.types import StructType, StructField, StringType, Row, DateType, LongType, IntegerType, ArrayType
 
 from pyspark_explorer.data_table import DataTable
 
@@ -39,6 +39,26 @@ class TestDataTable:
                 {"column": expected_cols[0], "kind": "simple", "value": 101, "display_value": "101"},
                 {"column": expected_cols[1], "kind": "simple", "value": "some text 2", "display_value": "some text 2"},
                 {"column": expected_cols[2], "kind": "simple", "value": "2024-01-02", "display_value": "2024-01-02"}
+            ]},
+        ]
+        assert tab.rows[0] == expected_rows[0]
+        assert tab.rows[1] == expected_rows[1]
+
+    def test_array_of_single_field(self) -> None:
+        schema = [StructField("arr", ArrayType(StructField("num", IntegerType())))]
+        rows = [Row(num=[1,2]),Row(num=[3,4])]
+        tab = DataTable(schema, rows)
+
+        expected_cols = [
+            {"col_index": 0, "name": "arr", "type": "ArrayType", "field_type": schema[0].dataType},
+        ]
+        assert tab.columns == expected_cols
+        expected_rows = [
+            {"row_index": 0, "row": [
+                {"column": expected_cols[0], "kind": "array", "value": [1,2], "display_value": str([1,2])},
+            ]},
+            {"row_index": 1, "row": [
+                {"column": expected_cols[0], "kind": "array", "value": [3,4], "display_value": str([3,4])},
             ]},
         ]
         assert tab.rows[0] == expected_rows[0]
