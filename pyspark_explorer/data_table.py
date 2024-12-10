@@ -7,10 +7,8 @@ class DataTable:
         self._data: [Row] = data
 
         self.columns = self.__extract_columns__()
-        self.rows = [
-            {"row_index": 0, "column": self.columns[0], "value": "some text 1", "display_value": "some text 1"},
-            {"row_index": 1, "column": self.columns[0], "value": "some text 2", "display_value": "some text 2"},
-        ]
+        self.rows = self.__extract_rows__()
+
 
     def __extract_columns__(self) -> []:
         cols = []
@@ -18,3 +16,21 @@ class DataTable:
             cols.append({"col_index": i, "name": field.name, "type": type(field.dataType).__name__, "field_type": field.dataType})
 
         return cols
+
+
+    def __extract_rows__(self) -> []:
+        assert len(self.columns) > 0  # ensure columns are calculated BEFORE rows
+
+        rows = []
+        for ri,data_row in enumerate(self._data):
+            row=[]
+            for fi, field in enumerate(data_row.__fields__):
+                value = data_row[field]
+                display_value = str(value)
+                kind = "simple"
+                row.append({"column": self.columns[fi], "kind": kind, "display_value": display_value,
+                            "value": value})
+
+            rows.append({"row_index": ri, "row": row})
+
+        return rows
