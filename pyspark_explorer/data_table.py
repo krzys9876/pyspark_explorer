@@ -1,4 +1,4 @@
-from pyspark.sql.types import StructField, Row
+from pyspark.sql.types import StructField, Row, StructType
 
 
 class DataTable:
@@ -26,8 +26,12 @@ class DataTable:
             row=[]
             for fi, field in enumerate(data_row.__fields__):
                 if self.columns[fi]["type"] == "ArrayType":
-                    value = data_row[field]
-                    display_value = str(value)
+                    # create internal schema as a single field
+                    column = StructField(self.columns[fi]["name"], self.columns[fi]["field_type"].elementType)
+                    # specify row schema in a form of name = value
+                    values_as_row = map(lambda r: Row(**{self.columns[fi]["name"] : r}), data_row[field])
+                    value = DataTable([column], values_as_row).rows
+                    display_value = str(data_row[field])
                     kind = "array"
                 else:
                     value = data_row[field]
