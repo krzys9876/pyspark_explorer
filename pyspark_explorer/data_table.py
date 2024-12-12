@@ -33,6 +33,13 @@ class DataTable:
                     value = DataTable([column], values_as_row).rows
                     display_value = str(data_row[field])
                     kind = "array"
+                elif self.columns[fi]["type"] == "StructType":
+                    # extract internal schema as an array of fields
+                    inner_schema = self.columns[fi]["field_type"].fields
+                    # a value is just a single Row, so we must pack it as an array and then unpack it
+                    value = DataTable(inner_schema, [data_row[field]]).rows[0]
+                    display_value = str(data_row[field])
+                    kind = "struct"
                 else:
                     value = data_row[field]
                     display_value = str(value)
