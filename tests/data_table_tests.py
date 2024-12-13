@@ -1,8 +1,7 @@
 import pytest
 from pyspark.sql.types import StructType, StructField, StringType, Row, DateType, LongType, IntegerType, ArrayType
 
-from pyspark_explorer.data_table import DataFrameTable
-
+from pyspark_explorer.data_table import DataFrameTable, extract_embedded_table
 
 
 class TestDataTable:
@@ -249,3 +248,15 @@ class TestDataTable:
 
         assert tab.rows == expected_rows
         assert tab.row_values == [["1",str(inner_rows1_as_rows)[:DataFrameTable.TEXT_LEN]],["2",str(inner_rows2_as_rows)[:DataFrameTable.TEXT_LEN]]]
+
+        # now drill down to details and make sure the results are the same
+        extracted_tab1 = extract_embedded_table(tab, 1, 0)
+        assert extracted_tab1 is not None
+        # this is the same as expected_cols[1] but with index 0
+        assert extracted_tab1.columns == [{"col_index": 0, "name": "structs", "type": "ArrayType", "field_type": schema[1].dataType}]
+        assert extracted_tab1.rows == inner_embedded_expected_rows1
+
+        extracted_tab2 = extract_embedded_table(extracted_tab1, 0, 0)
+        assert extracted_tab2 is not None
+        assert extracted_tab2.columns == inner_expected_cols1
+        assert extracted_tab2.rows == [inner_expected_rows1[0]]
