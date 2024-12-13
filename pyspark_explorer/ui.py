@@ -62,11 +62,11 @@ class DataApp(App):
         yield Header()
         yield Static("", id="top_status")
         yield Input(id="path")
-        yield Static("1234567890 1234567890", id="mid_status")
+        yield Static("", id="mid_status")
         yield DataTable(id="main_table")
         yield Static("", id="bottom_left_status")
         yield Static("", id="bottom_mid_status")
-        yield Static("6", id="bottom_right_status")
+        yield Static("", id="bottom_right_status")
         yield Footer(show_command_palette=True)
 
 
@@ -96,6 +96,7 @@ class DataApp(App):
 
 
     def action_reload_table(self) -> None:
+        self.notify("refreshing...")
         self.tab = self.orig_tab
         self.load_data()
 
