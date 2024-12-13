@@ -2,32 +2,34 @@ from pyspark.sql.types import StructField, Row, StructType
 
 
 class DataFrameTable:
-    TEXT_LEN = 15
+    TEXT_LEN = 50
 
     def __init__(self, schema: [StructField], data: [Row]):
         self._schema: [StructField] = schema
         self._data: [Row] = data
 
-        self.columns = self.__extract_columns__()
-        self.rows = self.__extract_rows__()
+        self.columns = []
+        self.column_names = []
+        self.rows = []
+        self.row_values = []
+        self.__extract_columns__()
+        self.__extract_rows__()
 
-        self.column_names = self.__extract_column_names__()
-        self.row_values = self.__extract_row_values__()
 
-
-    def __extract_columns__(self) -> []:
+    def __extract_columns__(self) -> None:
         cols = []
         for i,field in enumerate(self._schema):
             cols.append({"col_index": i, "name": field.name, "type": type(field.dataType).__name__, "field_type": field.dataType})
 
-        return cols
+        self.columns = cols
+        self.__extract_column_names__()
 
 
-    def __extract_column_names__(self) -> [str]:
-        return [c["name"] for c in self.columns]
+    def __extract_column_names__(self) -> None:
+        self.column_names = [c["name"] for c in self.columns]
 
 
-    def __extract_rows__(self) -> []:
+    def __extract_rows__(self) -> None:
         assert len(self.columns) > 0  # ensure columns are calculated BEFORE rows
 
         rows = []
@@ -59,12 +61,17 @@ class DataFrameTable:
 
             rows.append({"row_index": ri, "row": row})
 
-        return rows
+        self.set_rows(rows)
 
 
-    def __extract_row_values__(self) -> [[str]]:
+    def set_rows(self, rows: []) -> None:
+        self.rows = rows
+        self.__extract_row_values__()
+
+
+    def __extract_row_values__(self) -> None:
         # maybe it is not very readable but still it's one-liner
-        return [[c["display_value"][:DataFrameTable.TEXT_LEN] for c in r["row"]] for r in self.rows]
+        self.row_values = [[c["display_value"][:DataFrameTable.TEXT_LEN] for c in r["row"]] for r in self.rows]
 
 
     def select(self, x: int, y: int) -> {}:
@@ -81,14 +88,13 @@ def extract_embedded_table(tab: DataFrameTable, x: int, y: int) -> DataFrameTabl
         columns = [StructField(cell["column"]["name"], cell["column"]["field_type"])]
         new_tab = DataFrameTable(columns, [])
         rows = cell["value"]
-        new_tab.rows = rows
+        new_tab.set_rows(rows)
         return new_tab
     elif kind == "struct":
         columns = cell["column"]["field_type"].fields
         new_tab = DataFrameTable(columns, [])
-        rows = cell["value"]
-        print(rows)
-        new_tab.rows = [rows]
+        rows = [cell["value"]]
+        new_tab.set_rows(rows)
         return new_tab
 
     return None

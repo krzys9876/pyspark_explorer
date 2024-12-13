@@ -255,8 +255,13 @@ class TestDataTable:
         # this is the same as expected_cols[1] but with index 0
         assert extracted_tab1.columns == [{"col_index": 0, "name": "structs", "type": "ArrayType", "field_type": schema[1].dataType}]
         assert extracted_tab1.rows == inner_embedded_expected_rows1
+        assert extracted_tab1.column_names == ["structs"]
+        assert extracted_tab1.row_values == [[str(inner_rows1[0])[:DataFrameTable.TEXT_LEN]],[str(inner_rows1[1])[:DataFrameTable.TEXT_LEN]]]
 
         extracted_tab2 = extract_embedded_table(extracted_tab1, 0, 0)
         assert extracted_tab2 is not None
         assert extracted_tab2.columns == inner_expected_cols1
         assert extracted_tab2.rows == [inner_expected_rows1[0]]
+        assert extracted_tab2.column_names == ["id", "text", "date"]
+        # this is an input row but mapped to strings
+        assert extracted_tab2.row_values == [['11', 'some text 1', '2024-02-01']]
