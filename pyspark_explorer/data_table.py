@@ -3,6 +3,7 @@ from pyspark.sql.types import StructField, Row, StructType
 
 class DataFrameTable:
     TEXT_LEN = 50
+    TAKE_ROWS = 100
 
     def __init__(self, schema: [StructField], data: [Row]):
         self._schema: [StructField] = schema
