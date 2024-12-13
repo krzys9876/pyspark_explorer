@@ -1,7 +1,7 @@
 import pytest
 from pyspark.sql.types import StructType, StructField, StringType, Row, DateType, LongType, IntegerType, ArrayType
 
-from pyspark_explorer.data_table import DataTable
+from pyspark_explorer.data_table import DataFrameTable
 
 
 
@@ -66,24 +66,29 @@ class TestDataTable:
 
     def test_one_simple_field(self) -> None:
         schema, rows, expected_cols, expected_rows = TestDataTable.__prepare_simple_text_field__("some text 1", "some text 2")
-        tab = DataTable(schema, rows)
+        tab = DataFrameTable(schema, rows)
         assert tab.columns == expected_cols
         assert tab.rows == expected_rows
+        assert tab.column_names == [schema[0].name]
+        assert tab.row_values == [["some text 1"],["some text 2"]]
 
 
     def test_multiple_simple_fields(self) -> None:
         schema, rows, expected_cols, expected_rows = TestDataTable.__prepare_multiple_simple_fields__(
              [100, "some text 1", "2024-01-01"],[101, "some text 2", "2024-01-02"])
-        tab = DataTable(schema, rows)
+        tab = DataFrameTable(schema, rows)
         assert tab.columns == expected_cols
         assert tab.rows == expected_rows
+        assert tab.column_names == [schema[0].name, schema[1].name, schema[2].name]
+        assert tab.row_values == [["100", "some text 1", "2024-01-01"],["101", "some text 2", "2024-01-02"]]
+
 
     def test_array_of_single_field(self) -> None:
         # first test internal fields containing arrays
         inner_schema1, inner_rows1, inner_expected_cols1, inner_expected_rows1 = TestDataTable.__prepare_simple_num_field__(1,2)
         inner_schema2, inner_rows2, inner_expected_cols2, inner_expected_rows2 = TestDataTable.__prepare_simple_num_field__(3,4)
-        inner_tab1 = DataTable(inner_schema1, inner_rows1)
-        inner_tab2 = DataTable(inner_schema2, inner_rows2)
+        inner_tab1 = DataFrameTable(inner_schema1, inner_rows1)
+        inner_tab2 = DataFrameTable(inner_schema2, inner_rows2)
         assert inner_tab1.columns == inner_expected_cols1
         assert inner_tab2.columns == inner_expected_cols2
         assert inner_tab1.rows == inner_expected_rows1
@@ -92,12 +97,13 @@ class TestDataTable:
         # now test complex schema with embedded array of a simple field
         schema = [StructField("nums", ArrayType(IntegerType()))]
         rows = [Row(num=[1,2]),Row(num=[3,4])]
-        tab = DataTable(schema, rows)
+        tab = DataFrameTable(schema, rows)
 
         expected_cols = [
             {"col_index": 0, "name": "nums", "type": "ArrayType", "field_type": schema[0].dataType},
         ]
         assert tab.columns == expected_cols
+        assert tab.column_names == ["nums"]
         expected_rows = [
             {"row_index": 0, "row": [
                 {"column": expected_cols[0], "kind": "array", "value": inner_expected_rows1, "display_value": str([1,2])},
@@ -107,6 +113,7 @@ class TestDataTable:
             ]},
         ]
         assert tab.rows == expected_rows
+        assert tab.row_values == [[str([1,2])],[str([3,4])]]
 
 
     def test_embedded_struct_field(self) -> None:
@@ -115,8 +122,8 @@ class TestDataTable:
         inner_row2, inner_expected_row2 = TestDataTable.__prepare_multiple_simple_fields_row__([13, "some text 3", "2024-02-03"], 0)
         inner_schema, inner_expected_cols = TestDataTable.__prepare_multiple_simple_fields_schema__()
 
-        inner_tab1 = DataTable(inner_schema, [inner_row1])
-        inner_tab2 = DataTable(inner_schema, [inner_row2])
+        inner_tab1 = DataFrameTable(inner_schema, [inner_row1])
+        inner_tab2 = DataFrameTable(inner_schema, [inner_row2])
 
         assert inner_tab1.columns == inner_expected_cols
         assert inner_tab2.columns == inner_expected_cols
@@ -126,7 +133,7 @@ class TestDataTable:
         # now test complex schema with embedded struct field
         schema = [StructField("id", IntegerType()), StructField("struct", StructType(inner_schema))]
         rows = [Row(id=1, struct=inner_row1), Row(id=2, struct=inner_row2)]
-        tab = DataTable(schema, rows)
+        tab = DataFrameTable(schema, rows)
 
         expected_cols = [
             {"col_index": 0, "name": "id", "type": "IntegerType", "field_type": schema[0].dataType},
@@ -134,6 +141,7 @@ class TestDataTable:
         ]
 
         assert tab.columns == expected_cols
+        assert tab.column_names == ["id", "struct"]
 
         expected_rows = [
             {"row_index": 0, "row": [
@@ -147,6 +155,7 @@ class TestDataTable:
         ]
 
         assert tab.rows == expected_rows
+        assert tab.row_values == [["1", str(inner_row1)[:DataFrameTable.TEXT_LEN]],["2", str(inner_row2)[:DataFrameTable.TEXT_LEN]]]
 
 
     def __array_to_row__(self, schema:[StructField], arr: []) -> [Row]:
@@ -167,8 +176,8 @@ class TestDataTable:
             input_rows1[0], input_rows1[1])
         inner_schema2, inner_rows2, inner_expected_cols2, inner_expected_rows2 = TestDataTable.__prepare_multiple_simple_fields__(
             input_rows2[0], input_rows2[1])
-        inner_tab1 = DataTable(inner_schema1, inner_rows1)
-        inner_tab2 = DataTable(inner_schema2, inner_rows2)
+        inner_tab1 = DataFrameTable(inner_schema1, inner_rows1)
+        inner_tab2 = DataFrameTable(inner_schema2, inner_rows2)
         assert inner_tab1.columns == inner_expected_cols1
         assert inner_tab2.columns == inner_expected_cols2
         assert inner_tab1.rows == inner_expected_rows1
@@ -179,8 +188,8 @@ class TestDataTable:
         inner_embedded_schema2 = [StructField("structs",StructType(inner_schema2))]
         inner_embedded_rows1 = [Row(structs=inner_rows1[0]),Row(structs=inner_rows1[1])]
         inner_embedded_rows2 = [Row(structs=inner_rows2[0]),Row(structs=inner_rows2[1])]
-        inner_embedded_tab1 = DataTable(inner_embedded_schema1, inner_embedded_rows1)
-        inner_embedded_tab2 = DataTable(inner_embedded_schema2, inner_embedded_rows2)
+        inner_embedded_tab1 = DataFrameTable(inner_embedded_schema1, inner_embedded_rows1)
+        inner_embedded_tab2 = DataFrameTable(inner_embedded_schema2, inner_embedded_rows2)
         inner_embedded_expected_cols1 = [
             {"col_index": 0, "name": "structs", "type": "StructType", "field_type": inner_embedded_schema1[0].dataType}
         ]
@@ -218,13 +227,14 @@ class TestDataTable:
         inner_rows2_as_rows = self.__array_to_row__(inner_schema2, inner_rows2)
         schema = [StructField("id", IntegerType()), StructField("structs", ArrayType(StructType(inner_schema1)))]
         rows = [Row(id=1, structs=inner_rows1_as_rows), Row(id=2, structs=inner_rows2_as_rows)]
-        tab = DataTable(schema, rows)
+        tab = DataFrameTable(schema, rows)
 
         expected_cols = [
             {"col_index": 0, "name": "id", "type": "IntegerType", "field_type": schema[0].dataType},
             {"col_index": 1, "name": "structs", "type": "ArrayType", "field_type": schema[1].dataType}
         ]
         assert tab.columns == expected_cols
+        assert tab.column_names == ["id", "structs"]
 
         expected_rows = [
             {"row_index": 0, "row": [
@@ -238,3 +248,4 @@ class TestDataTable:
         ]
 
         assert tab.rows == expected_rows
+        assert tab.row_values == [["1",str(inner_rows1_as_rows)[:DataFrameTable.TEXT_LEN]],["2",str(inner_rows2_as_rows)[:DataFrameTable.TEXT_LEN]]]

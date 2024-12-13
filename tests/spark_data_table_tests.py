@@ -4,7 +4,7 @@ import os
 from pyspark.sql import SparkSession
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType, DateType, ArrayType
 
-from pyspark_explorer.data_table import DataTable
+from pyspark_explorer.data_table import DataFrameTable
 
 
 class TestSparkDataTable:
@@ -27,7 +27,7 @@ class TestSparkDataTable:
 
         df_cols = df.schema.fields
         df_rows = df.take(2)
-        tab = DataTable(df_cols, df_rows)
+        tab = DataFrameTable(df_cols, df_rows)
 
         expected_cols = [
             {'col_index': 0, 'name': 'id', 'type': 'IntegerType', 'field_type': IntegerType()},
@@ -59,7 +59,7 @@ class TestSparkDataTable:
 
         df_cols = df.schema.fields
         df_rows = df.take(2)
-        tab = DataTable(df_cols, df_rows)
+        tab = DataFrameTable(df_cols, df_rows)
 
         expected_cols = [
             {'col_index': 0, 'name': 'id', 'type': 'IntegerType', 'field_type': IntegerType()},
