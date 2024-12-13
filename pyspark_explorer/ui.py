@@ -128,7 +128,7 @@ class DataApp(App):
         if embedded_tab is None:
             self.notify("no further details available")
         else:
-            self.notify(f"drilling into details {len(embedded_tab.columns)} / {len(embedded_tab.rows)} / {len(embedded_tab.column_names)} / {len(embedded_tab.row_values)}")
+            self.notify(f"drilling into details: {len(embedded_tab.row_values)} row(s)")
             self.tab = embedded_tab
             self.load_data()
 
