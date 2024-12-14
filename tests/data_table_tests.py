@@ -99,7 +99,7 @@ class TestDataTable:
         tab = DataFrameTable(schema, rows)
 
         expected_cols = [
-            {"col_index": 0, "name": "nums", "type": "ArrayType", "field_type": schema[0].dataType},
+            {"col_index": 0, "name": "nums", "type": "ArrayType", "field_type": schema[0].dataType.elementType},
         ]
         assert tab.columns == expected_cols
         assert tab.column_names == ["nums"]
@@ -130,17 +130,17 @@ class TestDataTable:
         assert inner_tab2.rows == [inner_expected_row2]
 
         # now test complex schema with embedded struct field
-        schema = [StructField("id", IntegerType()), StructField("struct", StructType(inner_schema))]
+        schema = [StructField("row_id", IntegerType()), StructField("struct", StructType(inner_schema))]
         rows = [Row(id=1, struct=inner_row1), Row(id=2, struct=inner_row2)]
         tab = DataFrameTable(schema, rows)
 
         expected_cols = [
-            {"col_index": 0, "name": "id", "type": "IntegerType", "field_type": schema[0].dataType},
+            {"col_index": 0, "name": "row_id", "type": "IntegerType", "field_type": schema[0].dataType},
             {"col_index": 1, "name": "struct", "type": "StructType", "field_type": schema[1].dataType}
         ]
 
         assert tab.columns == expected_cols
-        assert tab.column_names == ["id", "struct"]
+        assert tab.column_names == ["row_id", "struct"]
 
         expected_rows = [
             {"row_index": 0, "row": [
@@ -155,6 +155,13 @@ class TestDataTable:
 
         assert tab.rows == expected_rows
         assert tab.row_values == [["1", str(inner_row1)[:DataFrameTable.TEXT_LEN]],["2", str(inner_row2)[:DataFrameTable.TEXT_LEN]]]
+
+        # now drill down to details and make sure the results are the same
+        extracted_tab1 = extract_embedded_table(tab, 1, 0)
+        print(extracted_tab1.columns)
+        assert extracted_tab1.columns == inner_expected_cols
+        print(extracted_tab1.rows)
+        assert extracted_tab1.rows == [inner_expected_row1]
 
 
     def __array_to_row__(self, schema:[StructField], arr: []) -> [Row]:
@@ -230,7 +237,7 @@ class TestDataTable:
 
         expected_cols = [
             {"col_index": 0, "name": "id", "type": "IntegerType", "field_type": schema[0].dataType},
-            {"col_index": 1, "name": "structs", "type": "ArrayType", "field_type": schema[1].dataType}
+            {"col_index": 1, "name": "structs", "type": "ArrayType", "field_type": schema[1].dataType.elementType}
         ]
         assert tab.columns == expected_cols
         assert tab.column_names == ["id", "structs"]
@@ -253,7 +260,7 @@ class TestDataTable:
         extracted_tab1 = extract_embedded_table(tab, 1, 0)
         assert extracted_tab1 is not None
         # this is the same as expected_cols[1] but with index 0
-        assert extracted_tab1.columns == [{"col_index": 0, "name": "structs", "type": "ArrayType", "field_type": schema[1].dataType}]
+        assert extracted_tab1.columns == [{"col_index": 0, "name": "structs", "type": "StructType", "field_type": schema[1].dataType.elementType}]
         assert extracted_tab1.rows == inner_embedded_expected_rows1
         assert extracted_tab1.column_names == ["structs"]
         assert extracted_tab1.row_values == [[str(inner_rows1[0])[:DataFrameTable.TEXT_LEN]],[str(inner_rows1[1])[:DataFrameTable.TEXT_LEN]]]

@@ -105,12 +105,13 @@ class DataApp(App):
         main_tab = self.__main_table__()
         x = main_tab.cursor_column
         y = main_tab.cursor_row
-        return x, y, self.tab.select(x,y)
+        column, cell = self.tab.select(x,y)
+        return x, y, column, cell
 
 
     @on(DataTable.CellHighlighted, "#main_table")
     def cell_highlighted(self, event: DataTable.CellHighlighted):
-        x, y, cell = self.__selected_cell_info__()
+        x, y, column, cell = self.__selected_cell_info__()
         pos_txt = f"{x+1}/{y+1}"
         top_status = self.__top_status__()
         top_status.update(pos_txt)
@@ -124,7 +125,7 @@ class DataApp(App):
 
     @on(DataTable.CellSelected, "#main_table")
     def cell_selected(self, event: DataTable.CellSelected):
-        x, y, _ = self.__selected_cell_info__()
+        x, y, _, _ = self.__selected_cell_info__()
         embedded_tab = extract_embedded_table(self.tab, x, y)
         if embedded_tab is None:
             self.notify("no further details available")

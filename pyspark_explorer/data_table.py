@@ -1,4 +1,5 @@
-from pyspark.sql.types import StructField, Row, StructType
+from pyspark.sql.types import StructField, Row, StructType, ArrayType
+from pyspark.sql.types import StructField, Row, StructType, ArrayType
 
 
 class DataFrameTable:
@@ -20,7 +21,11 @@ class DataFrameTable:
     def __extract_columns__(self) -> None:
         cols = []
         for i,field in enumerate(self._schema):
-            cols.append({"col_index": i, "name": field.name, "type": type(field.dataType).__name__, "field_type": field.dataType})
+            if type(field.dataType) == ArrayType:
+                field_type = field.dataType.elementType
+            else:
+                field_type = field.dataType
+            cols.append({"col_index": i, "name": field.name, "type": type(field.dataType).__name__, "field_type": field_type})
 
         self.columns = cols
         self.__extract_column_names__()
@@ -39,7 +44,7 @@ class DataFrameTable:
             for fi, field in enumerate(data_row.__fields__):
                 if self.columns[fi]["type"] == "ArrayType":
                     # create internal schema as a single field
-                    column = StructField(self.columns[fi]["name"], self.columns[fi]["field_type"].elementType)
+                    column = StructField(self.columns[fi]["name"], self.columns[fi]["field_type"])
                     # specify row schema in a form of name = value
                     values_as_row = map(lambda r: Row(**{self.columns[fi]["name"] : r}), data_row[field])
                     value = DataFrameTable([column], values_as_row).rows
@@ -75,24 +80,21 @@ class DataFrameTable:
         self.row_values = [[c["display_value"][:DataFrameTable.TEXT_LEN] for c in r["row"]] for r in self.rows]
 
 
-    def select(self, x: int, y: int) -> {}:
-        return self.rows[y]["row"][x]
-
-
-
+    def select(self, x: int, y: int) -> ({}, {}):
+        return self.columns[x], self.rows[y]["row"][x]
 
 
 def extract_embedded_table(tab: DataFrameTable, x: int, y: int) -> DataFrameTable | None:
-    cell = tab.select(x,y)
+    column, cell = tab.select(x,y)
     kind = cell["kind"]
     if kind=="array":
-        columns = [StructField(cell["column"]["name"], cell["column"]["field_type"])]
+        columns = [StructField(column["name"], column["field_type"])]
         new_tab = DataFrameTable(columns, [])
         rows = cell["value"]
         new_tab.set_rows(rows)
         return new_tab
     elif kind == "struct":
-        columns = cell["column"]["field_type"].fields
+        columns = column["field_type"].fields
         new_tab = DataFrameTable(columns, [])
         rows = [cell["value"]]
         new_tab.set_rows(rows)
