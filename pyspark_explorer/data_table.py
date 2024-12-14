@@ -62,7 +62,7 @@ class DataFrameTable:
                     display_value = str(value)
                     kind = "simple"
 
-                row.append({"column": self.columns[fi], "kind": kind, "display_value": display_value,
+                row.append({"kind": kind, "display_value": display_value,
                             "value": value})
 
             rows.append({"row_index": ri, "row": row})

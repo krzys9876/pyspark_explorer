@@ -119,7 +119,7 @@ class DataApp(App):
         dv_status = self.__bottom_mid_status__()
         dv_status.update(cell_dv)
         type_status = self.__bottom_left_status__()
-        type_status.update(f"{cell["column"]["name"]}\n  {cell["column"]["type"]}\n  {cell["kind"]}")
+        type_status.update(f"{column["name"]}\n  {column["type"]}\n  {cell["kind"]}")
         
 
 

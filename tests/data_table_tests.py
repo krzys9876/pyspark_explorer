@@ -11,8 +11,8 @@ class TestDataTable:
         rows = [Row(text=val1), Row(text=val2)]
         expected_cols = [{"col_index": 0, "name": "text", "type": "StringType", "field_type": schema[0].dataType}]
         expected_rows = [
-            {"row_index": 0, "row": [{"column": expected_cols[0], "kind": "simple", "value": val1, "display_value": val1}]},
-            {"row_index": 1, "row": [{"column": expected_cols[0], "kind": "simple", "value": val2, "display_value": val2}]},
+            {"row_index": 0, "row": [{"kind": "simple", "value": val1, "display_value": val1}]},
+            {"row_index": 1, "row": [{"kind": "simple", "value": val2, "display_value": val2}]},
         ]
         return schema, rows, expected_cols, expected_rows
 
@@ -24,8 +24,8 @@ class TestDataTable:
             {"col_index": 0, "name": "nums", "type": "IntegerType", "field_type": schema[0].dataType},
         ]
         expected_rows = [
-            {"row_index": 0, "row": [{"column": expected_cols[0], "kind": "simple", "value": val1, "display_value": str(val1)}]},
-            {"row_index": 1, "row": [{"column": expected_cols[0], "kind": "simple", "value": val2, "display_value": str(val2)}]},
+            {"row_index": 0, "row": [{"kind": "simple", "value": val1, "display_value": str(val1)}]},
+            {"row_index": 1, "row": [{"kind": "simple", "value": val2, "display_value": str(val2)}]},
         ]
         return schema, rows, expected_cols, expected_rows
 
@@ -46,9 +46,9 @@ class TestDataTable:
         row = Row(id=val[0], text=val[1], date=val[2])
         _, expected_cols = TestDataTable.__prepare_multiple_simple_fields_schema__()
         expected_row = {"row_index": index, "row": [
-            {"column": expected_cols[0], "kind": "simple", "value": val[0], "display_value": str(val[0])},
-            {"column": expected_cols[1], "kind": "simple", "value": val[1], "display_value": val[1]},
-            {"column": expected_cols[2], "kind": "simple", "value": val[2], "display_value": val[2]}
+            {"kind": "simple", "value": val[0], "display_value": str(val[0])},
+            {"kind": "simple", "value": val[1], "display_value": val[1]},
+            {"kind": "simple", "value": val[2], "display_value": val[2]}
         ]}
         return row, expected_row
 
@@ -105,10 +105,10 @@ class TestDataTable:
         assert tab.column_names == ["nums"]
         expected_rows = [
             {"row_index": 0, "row": [
-                {"column": expected_cols[0], "kind": "array", "value": inner_expected_rows1, "display_value": str([1,2])},
+                {"kind": "array", "value": inner_expected_rows1, "display_value": str([1,2])},
             ]},
             {"row_index": 1, "row": [
-                {"column": expected_cols[0], "kind": "array", "value": inner_expected_rows2, "display_value": str([3,4])},
+                {"kind": "array", "value": inner_expected_rows2, "display_value": str([3,4])},
             ]},
         ]
         assert tab.rows == expected_rows
@@ -144,12 +144,12 @@ class TestDataTable:
 
         expected_rows = [
             {"row_index": 0, "row": [
-                {"column": expected_cols[0], "kind": "simple", "value": 1, "display_value": "1"},
-                {"column": expected_cols[1], "kind": "struct", "value": inner_expected_row1, "display_value": str(inner_row1)},
+                {"kind": "simple", "value": 1, "display_value": "1"},
+                {"kind": "struct", "value": inner_expected_row1, "display_value": str(inner_row1)},
             ]},
             {"row_index": 1, "row": [
-                {"column": expected_cols[0], "kind": "simple", "value": 2, "display_value": "2"},
-                {"column": expected_cols[1], "kind": "struct", "value": inner_expected_row2, "display_value": str(inner_row2)},
+                {"kind": "simple", "value": 2, "display_value": "2"},
+                {"kind": "struct", "value": inner_expected_row2, "display_value": str(inner_row2)},
             ]},
         ]
 
@@ -210,19 +210,19 @@ class TestDataTable:
         inner_expected_rows1_upd["row_index"]=0
         inner_embedded_expected_rows1 = [
             {"row_index": 0, "row": [
-                {"column": inner_embedded_expected_cols1[0], "kind": "struct", "value": inner_expected_rows1[0], "display_value": str(inner_rows1[0])}
+                {"kind": "struct", "value": inner_expected_rows1[0], "display_value": str(inner_rows1[0])}
             ]},
             {"row_index": 1, "row": [
-                {"column": inner_embedded_expected_cols1[0], "kind": "struct", "value": inner_expected_rows1_upd, "display_value": str(inner_rows1[1])}
+                {"kind": "struct", "value": inner_expected_rows1_upd, "display_value": str(inner_rows1[1])}
             ]}]
         inner_expected_rows2_upd = inner_expected_rows2[1]
         inner_expected_rows2_upd["row_index"]=0
         inner_embedded_expected_rows2 = [
             {"row_index": 0, "row": [
-                {"column": inner_embedded_expected_cols2[0], "kind": "struct", "value": inner_expected_rows2[0], "display_value": str(inner_rows2[0])}
+                {"kind": "struct", "value": inner_expected_rows2[0], "display_value": str(inner_rows2[0])}
             ]},
             {"row_index": 1, "row": [
-                {"column": inner_embedded_expected_cols2[0], "kind": "struct", "value": inner_expected_rows2_upd, "display_value": str(inner_rows2[1])}
+                {"kind": "struct", "value": inner_expected_rows2_upd, "display_value": str(inner_rows2[1])}
             ]}]
 
         assert inner_embedded_tab1.rows == inner_embedded_expected_rows1
@@ -244,12 +244,12 @@ class TestDataTable:
 
         expected_rows = [
             {"row_index": 0, "row": [
-                {"column": expected_cols[0], "kind": "simple", "value": 1, "display_value": "1"},
-                {"column": expected_cols[1], "kind": "array", "value": inner_embedded_expected_rows1, "display_value": str(inner_rows1_as_rows)},
+                {"kind": "simple", "value": 1, "display_value": "1"},
+                {"kind": "array", "value": inner_embedded_expected_rows1, "display_value": str(inner_rows1_as_rows)},
             ]},
             {"row_index": 1, "row": [
-                {"column": expected_cols[0], "kind": "simple", "value": 2, "display_value": "2"},
-                {"column": expected_cols[1], "kind": "array", "value": inner_embedded_expected_rows2, "display_value": str(inner_rows2_as_rows)},
+                {"kind": "simple", "value": 2, "display_value": "2"},
+                {"kind": "array", "value": inner_embedded_expected_rows2, "display_value": str(inner_rows2_as_rows)},
             ]},
         ]
 
