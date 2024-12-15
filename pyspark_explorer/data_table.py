@@ -25,7 +25,14 @@ class DataFrameTable:
                 field_type = field.dataType.elementType
             else:
                 field_type = field.dataType
-            cols.append({"col_index": i, "name": field.name, "type": type(field.dataType).__name__, "field_type": field_type})
+
+            if type(field.dataType) == StructType:
+                kind = "struct"
+            elif type(field.dataType) == ArrayType:
+                kind = "array"
+            else:
+                kind = "simple"
+            cols.append({"col_index": i, "name": field.name, "kind": kind, "type": type(field.dataType).__name__, "field_type": field_type})
 
         self.columns = cols
         self.__extract_column_names__()

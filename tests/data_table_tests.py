@@ -9,7 +9,7 @@ class TestDataTable:
     def __prepare_simple_text_field__(val1: str, val2: str) -> ([StructField], [Row], {}, {}):
         schema = [StructField("text", StringType())]
         rows = [Row(text=val1), Row(text=val2)]
-        expected_cols = [{"col_index": 0, "name": "text", "type": "StringType", "field_type": schema[0].dataType}]
+        expected_cols = [{"col_index": 0, "name": "text", "kind": "simple", "type": "StringType", "field_type": schema[0].dataType}]
         expected_rows = [
             {"row_index": 0, "row": [{"kind": "simple", "value": val1, "display_value": val1}]},
             {"row_index": 1, "row": [{"kind": "simple", "value": val2, "display_value": val2}]},
@@ -21,7 +21,7 @@ class TestDataTable:
         schema = [StructField("nums", IntegerType())]
         rows = [Row(nums=val1),Row(nums=val2)]
         expected_cols = [
-            {"col_index": 0, "name": "nums", "type": "IntegerType", "field_type": schema[0].dataType},
+            {"col_index": 0, "name": "nums", "kind": "simple", "type": "IntegerType", "field_type": schema[0].dataType},
         ]
         expected_rows = [
             {"row_index": 0, "row": [{"kind": "simple", "value": val1, "display_value": str(val1)}]},
@@ -34,9 +34,9 @@ class TestDataTable:
     def __prepare_multiple_simple_fields_schema__() -> ([StructField], []):
         schema = [StructField("id", LongType()), StructField("text", StringType()), StructField("date", DateType())]
         expected_cols = [
-            {"col_index": 0, "name": "id", "type": "LongType", "field_type": schema[0].dataType},
-            {"col_index": 1, "name": "text", "type": "StringType", "field_type": schema[1].dataType},
-            {"col_index": 2, "name": "date", "type": "DateType", "field_type": schema[2].dataType}
+            {"col_index": 0, "name": "id", "kind": "simple", "type": "LongType", "field_type": schema[0].dataType},
+            {"col_index": 1, "name": "text", "kind": "simple", "type": "StringType", "field_type": schema[1].dataType},
+            {"col_index": 2, "name": "date", "kind": "simple", "type": "DateType", "field_type": schema[2].dataType}
         ]
         return (schema, expected_cols)
 
@@ -99,7 +99,7 @@ class TestDataTable:
         tab = DataFrameTable(schema, rows)
 
         expected_cols = [
-            {"col_index": 0, "name": "nums", "type": "ArrayType", "field_type": schema[0].dataType.elementType},
+            {"col_index": 0, "name": "nums", "kind": "array", "type": "ArrayType", "field_type": schema[0].dataType.elementType},
         ]
         assert tab.columns == expected_cols
         assert tab.column_names == ["nums"]
@@ -135,8 +135,8 @@ class TestDataTable:
         tab = DataFrameTable(schema, rows)
 
         expected_cols = [
-            {"col_index": 0, "name": "row_id", "type": "IntegerType", "field_type": schema[0].dataType},
-            {"col_index": 1, "name": "struct", "type": "StructType", "field_type": schema[1].dataType}
+            {"col_index": 0, "name": "row_id", "kind": "simple", "type": "IntegerType", "field_type": schema[0].dataType},
+            {"col_index": 1, "name": "struct", "kind": "struct", "type": "StructType", "field_type": schema[1].dataType}
         ]
 
         assert tab.columns == expected_cols
@@ -197,10 +197,10 @@ class TestDataTable:
         inner_embedded_tab1 = DataFrameTable(inner_embedded_schema1, inner_embedded_rows1)
         inner_embedded_tab2 = DataFrameTable(inner_embedded_schema2, inner_embedded_rows2)
         inner_embedded_expected_cols1 = [
-            {"col_index": 0, "name": "structs", "type": "StructType", "field_type": inner_embedded_schema1[0].dataType}
+            {"col_index": 0, "name": "structs", "kind": "struct", "type": "StructType", "field_type": inner_embedded_schema1[0].dataType}
         ]
         inner_embedded_expected_cols2 = [
-            {"col_index": 0, "name": "structs", "type": "StructType", "field_type": inner_embedded_schema2[0].dataType}
+            {"col_index": 0, "name": "structs", "kind": "struct", "type": "StructType", "field_type": inner_embedded_schema2[0].dataType}
         ]
 
         assert inner_embedded_tab1.columns == inner_embedded_expected_cols1
@@ -236,8 +236,8 @@ class TestDataTable:
         tab = DataFrameTable(schema, rows)
 
         expected_cols = [
-            {"col_index": 0, "name": "id", "type": "IntegerType", "field_type": schema[0].dataType},
-            {"col_index": 1, "name": "structs", "type": "ArrayType", "field_type": schema[1].dataType.elementType}
+            {"col_index": 0, "name": "id", "kind": "simple", "type": "IntegerType", "field_type": schema[0].dataType},
+            {"col_index": 1, "name": "structs", "kind": "array", "type": "ArrayType", "field_type": schema[1].dataType.elementType}
         ]
         assert tab.columns == expected_cols
         assert tab.column_names == ["id", "structs"]
@@ -260,7 +260,7 @@ class TestDataTable:
         extracted_tab1 = extract_embedded_table(tab, 1, 0)
         assert extracted_tab1 is not None
         # this is the same as expected_cols[1] but with index 0
-        assert extracted_tab1.columns == [{"col_index": 0, "name": "structs", "type": "StructType", "field_type": schema[1].dataType.elementType}]
+        assert extracted_tab1.columns == [{"col_index": 0, "name": "structs", "kind": "struct", "type": "StructType", "field_type": schema[1].dataType.elementType}]
         assert extracted_tab1.rows == inner_embedded_expected_rows1
         assert extracted_tab1.column_names == ["structs"]
         assert extracted_tab1.row_values == [[str(inner_rows1[0])[:DataFrameTable.TEXT_LEN]],[str(inner_rows1[1])[:DataFrameTable.TEXT_LEN]]]
