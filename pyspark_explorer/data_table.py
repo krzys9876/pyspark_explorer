@@ -56,21 +56,17 @@ class DataFrameTable:
                     values_as_row = map(lambda r: Row(**{self.columns[fi]["name"] : r}), data_row[field])
                     value = DataFrameTable([column], values_as_row).rows
                     display_value = str(data_row[field])
-                    kind = "array"
                 elif self.columns[fi]["type"] == "StructType":
                     # extract internal schema as an array of fields
                     inner_schema = self.columns[fi]["field_type"].fields
                     # a value is just a single Row, so we must pack it as an array and then unpack it
                     value = DataFrameTable(inner_schema, [data_row[field]]).rows[0]
                     display_value = str(data_row[field])
-                    kind = "struct"
                 else:
                     value = data_row[field]
                     display_value = str(value)
-                    kind = "simple"
 
-                row.append({"kind": kind, "display_value": display_value,
-                            "value": value})
+                row.append({"display_value": display_value, "value": value})
 
             rows.append({"row_index": ri, "row": row})
 
@@ -93,7 +89,7 @@ class DataFrameTable:
 
 def extract_embedded_table(tab: DataFrameTable, x: int, y: int) -> DataFrameTable | None:
     column, cell = tab.select(x,y)
-    kind = cell["kind"]
+    kind = column["kind"]
     if kind=="array":
         columns = [StructField(column["name"], column["field_type"])]
         new_tab = DataFrameTable(columns, [])
