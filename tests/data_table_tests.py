@@ -203,13 +203,13 @@ class TestDataTable:
         inner_expected_rows1_upd = inner_expected_rows1[1]
         inner_expected_rows1_upd["row_index"]=0
         inner_embedded_expected_rows1 = [
-            {"row_index": 0, "row": [{"value": inner_expected_rows1[0], "display_value": str(inner_rows1[0])}]},
-            {"row_index": 1, "row": [{"value": inner_expected_rows1_upd, "display_value": str(inner_rows1[1])}]}]
+            {"row_index": 0, "row": [{"value": inner_expected_rows1[0], "display_value": str(inner_rows1[0])[:DataFrameTable.TEXT_LEN]}]},
+            {"row_index": 1, "row": [{"value": inner_expected_rows1_upd, "display_value": str(inner_rows1[1])[:DataFrameTable.TEXT_LEN]}]}]
         inner_expected_rows2_upd = inner_expected_rows2[1]
         inner_expected_rows2_upd["row_index"]=0
         inner_embedded_expected_rows2 = [
-            {"row_index": 0, "row": [{"value": inner_expected_rows2[0], "display_value": str(inner_rows2[0])}]},
-            {"row_index": 1, "row": [{"value": inner_expected_rows2_upd, "display_value": str(inner_rows2[1])}]}]
+            {"row_index": 0, "row": [{"value": inner_expected_rows2[0], "display_value": str(inner_rows2[0])[:DataFrameTable.TEXT_LEN]}]},
+            {"row_index": 1, "row": [{"value": inner_expected_rows2_upd, "display_value": str(inner_rows2[1])[:DataFrameTable.TEXT_LEN]}]}]
 
         assert inner_embedded_tab1.rows == inner_embedded_expected_rows1
         assert inner_embedded_tab2.rows == inner_embedded_expected_rows2
@@ -231,11 +231,11 @@ class TestDataTable:
         expected_rows = [
             {"row_index": 0, "row": [
                 {"value": 1, "display_value": "1"},
-                {"value": inner_embedded_expected_rows1, "display_value": str(inner_rows1_as_rows)},
+                {"value": inner_embedded_expected_rows1, "display_value": str(inner_rows1_as_rows)[:DataFrameTable.TEXT_LEN]},
             ]},
             {"row_index": 1, "row": [
                 {"value": 2, "display_value": "2"},
-                {"value": inner_embedded_expected_rows2, "display_value": str(inner_rows2_as_rows)},
+                {"value": inner_embedded_expected_rows2, "display_value": str(inner_rows2_as_rows)[:DataFrameTable.TEXT_LEN]},
             ]},
         ]
 
@@ -302,3 +302,38 @@ class TestDataTable:
         assert tab.row_values == [
             ["1", str(inner_row1)[:DataFrameTable.TEXT_LEN], *[str(v["value"]) for v in inner_expected_row1["row"]]],
             ["2", str(inner_row2)[:DataFrameTable.TEXT_LEN], *[str(v["value"]) for v in inner_expected_row2["row"]]]]
+
+
+    # def test_embedded_array_of_struct_field_expansion(self) -> None:
+    #     schema = [
+    #         StructField("row_id1", IntegerType()),
+    #         StructField("struct1", ArrayType(StructType([
+    #             StructField("row_id2", IntegerType()),
+    #             StructField("struct2", ArrayType(StructType([
+    #                 StructField("row_id3", IntegerType()),
+    #                 StructField("row_value3", IntegerType())
+    #             ])))])))]
+    #     rows = [Row(
+    #         row_id1=1,
+    #         struct1 = [Row(
+    #             row_id2=11,
+    #             struct2 = [Row(
+    #                 row_id3=111, row_value3=911
+    #             )])])]
+    #
+    #     tab = DataFrameTable(schema, data = rows, expand_structs = True)
+    #
+    #     expected_cols = [
+    #         {'col_index': 0, 'name': 'row_id1', 'kind': 'simple', 'type': 'IntegerType', 'field_type': IntegerType()},
+    #         {'col_index': 1, 'name': 'struct1', 'kind': 'array', 'type': 'ArrayType', 'field_type': schema[1].dataType.elementType}
+    #     ]
+    #
+    #     print("TAB.LEVEL1")
+    #     print(tab.columns)
+    #     print(tab.rows)
+    #
+    #     expected_rows = [{"row_index": 0, "row": [{"display_value": "1", "value": 1},{"display_value": str(rows[0].struct1)[:DataFrameTable.TEXT_LEN]}]}]
+    #     print(expected_rows)
+    #
+    #     assert tab.columns==expected_cols
+    #     assert tab.rows == expected_rows
