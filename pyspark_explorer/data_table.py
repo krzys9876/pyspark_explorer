@@ -7,7 +7,11 @@ class DataFrameTable:
     TAKE_ROWS = 100
 
     # allow original rows (Row type) or previously transformed rows (when drilling to details)
-    def __init__(self, schema: [StructField], data: [Row] = [], transformed_data = [], expand_structs: bool = False):
+    def __init__(self, schema: [StructField], data=None, transformed_data=None, expand_structs: bool = False):
+        if transformed_data is None:
+            transformed_data = []
+        if data is None:
+            data = []
         self._schema: [StructField] = schema
         self._data: [Row] = data
         self._expand_structs: bool = expand_structs
@@ -27,7 +31,8 @@ class DataFrameTable:
             self.__expand_structs__()
 
 
-    def __extract_kind__(self, field: StructField) -> str:
+    @staticmethod
+    def __extract_kind__(field: StructField) -> str:
         if type(field.dataType) == StructType:
             kind = "struct"
         elif type(field.dataType) == ArrayType:
@@ -65,7 +70,8 @@ class DataFrameTable:
         self.__extract_row_values__()
 
 
-    def __extract_type__(self, field) -> StructType:
+    @staticmethod
+    def __extract_type__(field) -> StructType:
         # extract inner type from ArrayType, return field type otherwise
         if type(field.dataType) == ArrayType:
             return field.dataType.elementType

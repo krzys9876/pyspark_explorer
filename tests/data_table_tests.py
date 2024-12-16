@@ -1,4 +1,3 @@
-import pytest
 from pyspark.sql.types import StructType, StructField, StringType, Row, DateType, LongType, IntegerType, ArrayType
 
 from pyspark_explorer.data_table import DataFrameTable, extract_embedded_table
@@ -38,7 +37,7 @@ class TestDataTable:
             {"col_index": 1, "name": "text", "kind": "simple", "type": "StringType", "field_type": schema[1].dataType},
             {"col_index": 2, "name": "date", "kind": "simple", "type": "DateType", "field_type": schema[2].dataType}
         ]
-        return (schema, expected_cols)
+        return schema, expected_cols
 
 
     @staticmethod
@@ -157,8 +156,8 @@ class TestDataTable:
         assert extracted_tab1.columns == inner_expected_cols
         assert extracted_tab1.rows == [inner_expected_row1]
 
-
-    def __array_to_row__(self, schema:[StructField], arr: []) -> [Row]:
+    @staticmethod
+    def __array_to_row__(schema:[StructField], arr: []) -> [Row]:
         field_names = list(map(lambda f: f.name, schema))
         res_rows: [Row] = []
         for elem in arr:
