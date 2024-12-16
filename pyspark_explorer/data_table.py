@@ -1,21 +1,65 @@
 from pyspark.sql.types import StructField, Row, StructType, ArrayType
-from pyspark.sql.types import StructField, Row, StructType, ArrayType
+import copy
 
 
 class DataFrameTable:
     TEXT_LEN = 50
     TAKE_ROWS = 100
 
-    def __init__(self, schema: [StructField], data: [Row]):
+    def __init__(self, schema: [StructField], data: [Row] = [], transformed_data = [], expand_structs: bool = False):
         self._schema: [StructField] = schema
         self._data: [Row] = data
+        self._expand_structs: bool = expand_structs
 
         self.columns = []
         self.column_names = []
         self.rows = []
         self.row_values = []
         self.__extract_columns__()
-        self.__extract_rows__()
+
+        if len(data):
+            self.__extract_rows__()
+        else:
+            self.rows = transformed_data
+            self.__extract_row_values__()
+
+        if self._expand_structs:
+            self.__expand_structs__()
+
+
+    def __kind_from_type__(self, field: StructField) -> str:
+        if type(field.dataType) == StructType:
+            kind = "struct"
+        elif type(field.dataType) == ArrayType:
+            kind = "array"
+        else:
+            kind = "simple"
+        return kind
+
+
+    def __expand_structs__(self):
+        new_cols = [] # NOTE: we cannot modify self.columns on the fly in the loop below, we would modify the loop
+        col_index = 0
+        existing_columns = copy.deepcopy(self.columns)
+        for ci, col in enumerate(existing_columns):
+            col["col_index"] = col_index
+            new_cols.append(col)
+            col_index += 1
+            if col["kind"] == "struct":
+                for fi,field in enumerate(col["field_type"].fields):
+                    kind = self.__kind_from_type__(field)
+                    new_col = {"col_index": col_index, "name": f"*{field.name}", "kind": kind, "type": type(field.dataType).__name__, "field_type": field.dataType}
+                    new_cols.append(new_col)
+
+                    for row in self.rows:
+                        struct_value = copy.deepcopy(row["row"][ci]["value"])
+                        row["row"].insert(col_index, struct_value["row"][fi])
+
+                    col_index += 1
+
+        self.columns = new_cols
+        self.__extract_column_names__()
+        self.__extract_row_values__()
 
 
     def __extract_columns__(self) -> None:
@@ -26,12 +70,7 @@ class DataFrameTable:
             else:
                 field_type = field.dataType
 
-            if type(field.dataType) == StructType:
-                kind = "struct"
-            elif type(field.dataType) == ArrayType:
-                kind = "array"
-            else:
-                kind = "simple"
+            kind = self.__kind_from_type__(field)
             cols.append({"col_index": i, "name": field.name, "kind": kind, "type": type(field.dataType).__name__, "field_type": field_type})
 
         self.columns = cols
@@ -53,7 +92,7 @@ class DataFrameTable:
                     # create internal schema as a single field
                     column = StructField(self.columns[fi]["name"], self.columns[fi]["field_type"])
                     # specify row schema in a form of name = value
-                    values_as_row = map(lambda r: Row(**{self.columns[fi]["name"] : r}), data_row[field])
+                    values_as_row = list(map(lambda r: Row(**{self.columns[fi]["name"] : r}), data_row[field]))
                     value = DataFrameTable([column], values_as_row).rows
                     display_value = str(data_row[field])
                 elif self.columns[fi]["type"] == "StructType":
@@ -87,20 +126,18 @@ class DataFrameTable:
         return self.columns[x], self.rows[y]["row"][x]
 
 
-def extract_embedded_table(tab: DataFrameTable, x: int, y: int) -> DataFrameTable | None:
+def extract_embedded_table(tab: DataFrameTable, x: int, y: int, expand_structs: bool = False) -> DataFrameTable | None:
     column, cell = tab.select(x,y)
     kind = column["kind"]
     if kind=="array":
-        columns = [StructField(column["name"], column["field_type"])]
-        new_tab = DataFrameTable(columns, [])
-        rows = cell["value"]
-        new_tab.set_rows(rows)
+        columns = copy.deepcopy([StructField(column["name"], column["field_type"])])
+        rows = copy.deepcopy(cell["value"])
+        new_tab = DataFrameTable(columns, data= [], transformed_data=rows, expand_structs= expand_structs)
         return new_tab
     elif kind == "struct":
-        columns = column["field_type"].fields
-        new_tab = DataFrameTable(columns, [])
-        rows = [cell["value"]]
-        new_tab.set_rows(rows)
+        columns = copy.deepcopy(column["field_type"].fields)
+        rows = copy.deepcopy([cell["value"]])
+        new_tab = DataFrameTable(columns, data= [], transformed_data=rows, expand_structs= expand_structs)
         return new_tab
 
     return None

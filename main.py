@@ -11,7 +11,7 @@ def main() -> None:
 
     df = spark.read.format("json").load(path=sys.argv[1])
 
-    tab = DataFrameTable(df.schema.fields, df.take(DataFrameTable.TAKE_ROWS))
+    tab = DataFrameTable(df.schema.fields, df.take(DataFrameTable.TAKE_ROWS), True)
 
     app = ui.DataApp(data = tab)
     app.run()

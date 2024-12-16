@@ -154,9 +154,7 @@ class TestDataTable:
 
         # now drill down to details and make sure the results are the same
         extracted_tab1 = extract_embedded_table(tab, 1, 0)
-        print(extracted_tab1.columns)
         assert extracted_tab1.columns == inner_expected_cols
-        print(extracted_tab1.rows)
         assert extracted_tab1.rows == [inner_expected_row1]
 
 
@@ -260,3 +258,47 @@ class TestDataTable:
         assert extracted_tab2.column_names == ["id", "text", "date"]
         # this is an input row but mapped to strings
         assert extracted_tab2.row_values == [['11', 'some text 1', '2024-02-01']]
+
+
+    def test_struct_field_expansion(self) -> None:
+        # first test internal fields (struct fields)
+        inner_row1, inner_expected_row1 = TestDataTable.__prepare_multiple_simple_fields_row__([11, "some text 1", "2024-02-01"], 0)
+        inner_row2, inner_expected_row2 = TestDataTable.__prepare_multiple_simple_fields_row__([13, "some text 3", "2024-02-03"], 0)
+        inner_schema, inner_expected_cols = TestDataTable.__prepare_multiple_simple_fields_schema__()
+
+        schema = [StructField("row_id", IntegerType()), StructField("struct", StructType(inner_schema))]
+        rows = [Row(id=1, struct=inner_row1), Row(id=2, struct=inner_row2)]
+        tab = DataFrameTable(schema, data = rows, expand_structs = True)
+
+        expected_cols = [
+            {"col_index": 0, "name": "row_id", "kind": "simple", "type": "IntegerType", "field_type": schema[0].dataType},
+            {"col_index": 1, "name": "struct", "kind": "struct", "type": "StructType", "field_type": schema[1].dataType},
+            {"col_index": 2, "name": "*id", "kind": "simple", "type": "LongType", "field_type": inner_schema[0].dataType},
+            {"col_index": 3, "name": "*text", "kind": "simple", "type": "StringType", "field_type": inner_schema[1].dataType},
+            {"col_index": 4, "name": "*date", "kind": "simple", "type": "DateType", "field_type": inner_schema[2].dataType}
+        ]
+
+        assert tab.columns == expected_cols
+        assert tab.column_names == ["row_id", "struct", "*id", "*text", "*date"]
+
+        expected_rows = [
+            {"row_index": 0, "row": [
+                {"value": 1, "display_value": "1"},
+                {"value": inner_expected_row1, "display_value": str(inner_row1)},
+                {"value": inner_expected_row1["row"][0]["value"], "display_value": str(inner_expected_row1["row"][0]["value"])},
+                {"value": inner_expected_row1["row"][1]["value"], "display_value": str(inner_expected_row1["row"][1]["value"])},
+                {"value": inner_expected_row1["row"][2]["value"], "display_value": str(inner_expected_row1["row"][2]["value"])},
+            ]},
+            {"row_index": 1, "row": [
+                {"value": 2, "display_value": "2"},
+                {"value": inner_expected_row2, "display_value": str(inner_row2)},
+                {"value": inner_expected_row2["row"][0]["value"],"display_value": str(inner_expected_row2["row"][0]["value"])},
+                {"value": inner_expected_row2["row"][1]["value"],"display_value": str(inner_expected_row2["row"][1]["value"])},
+                {"value": inner_expected_row2["row"][2]["value"],"display_value": str(inner_expected_row2["row"][2]["value"])},
+            ]},
+        ]
+
+        assert tab.rows == expected_rows
+        assert tab.row_values == [
+            ["1", str(inner_row1)[:DataFrameTable.TEXT_LEN], *[str(v["value"]) for v in inner_expected_row1["row"]]],
+            ["2", str(inner_row2)[:DataFrameTable.TEXT_LEN], *[str(v["value"]) for v in inner_expected_row2["row"]]]]

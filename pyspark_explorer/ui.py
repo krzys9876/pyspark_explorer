@@ -126,7 +126,7 @@ class DataApp(App):
     @on(DataTable.CellSelected, "#main_table")
     def cell_selected(self, event: DataTable.CellSelected):
         x, y, _, _ = self.__selected_cell_info__()
-        embedded_tab = extract_embedded_table(self.tab, x, y)
+        embedded_tab = extract_embedded_table(self.tab, x, y, True)
         if embedded_tab is None:
             self.notify("no further details available")
         else:
