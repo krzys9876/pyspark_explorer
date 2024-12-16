@@ -39,6 +39,7 @@ class DataFrameTable:
 
     def __expand_structs__(self):
         new_cols = [] # NOTE: we cannot modify self.columns on the fly in the loop below, we would modify the loop
+        new_rows = copy.deepcopy(self.rows)
         col_index = 0
         existing_columns = copy.deepcopy(self.columns)
         for ci, col in enumerate(existing_columns):
@@ -51,13 +52,14 @@ class DataFrameTable:
                     new_col = {"col_index": col_index, "name": f"*{field.name}", "kind": kind, "type": type(field.dataType).__name__, "field_type": field.dataType}
                     new_cols.append(new_col)
 
-                    for row in self.rows:
-                        struct_value = copy.deepcopy(row["row"][ci]["value"])
+                    for row in new_rows:
+                        struct_value = row["row"][ci]["value"]
                         row["row"].insert(col_index, struct_value["row"][fi])
 
                     col_index += 1
 
         self.columns = new_cols
+        self.rows = new_rows
         self.__extract_column_names__()
         self.__extract_row_values__()
 
@@ -88,14 +90,14 @@ class DataFrameTable:
         for ri,data_row in enumerate(self._data):
             row=[]
             for fi, field in enumerate(data_row.__fields__):
-                if self.columns[fi]["type"] == "ArrayType":
+                if self.columns[fi]["kind"] == "array":
                     # create internal schema as a single field
                     column = StructField(self.columns[fi]["name"], self.columns[fi]["field_type"])
                     # specify row schema in a form of name = value
                     values_as_row = list(map(lambda r: Row(**{self.columns[fi]["name"] : r}), data_row[field]))
                     value = DataFrameTable([column], values_as_row).rows
                     display_value = str(data_row[field])[:DataFrameTable.TEXT_LEN]
-                elif self.columns[fi]["type"] == "StructType":
+                elif self.columns[fi]["kind"] == "struct":
                     # extract internal schema as an array of fields
                     inner_schema = self.columns[fi]["field_type"].fields
                     # a value is just a single Row, so we must pack it as an array and then unpack it
@@ -127,16 +129,19 @@ class DataFrameTable:
 
 
 def extract_embedded_table(tab: DataFrameTable, x: int, y: int, expand_structs: bool = False) -> DataFrameTable | None:
+    # check for kind=array but field_type=StructType - this means that we want to drill down from array to structs
     column, cell = tab.select(x,y)
     kind = column["kind"]
+    if kind == "struct": # or type(column["field_type"]) == StructType:
+        columns = copy.deepcopy(column["field_type"].fields)
+        rows = copy.deepcopy([cell["value"]])
+        new_tab = DataFrameTable(columns, data= [], transformed_data=rows, expand_structs= expand_structs)
+        return new_tab
+
+    # other case for array
     if kind=="array":
         columns = copy.deepcopy([StructField(column["name"], column["field_type"])])
         rows = copy.deepcopy(cell["value"])
-        new_tab = DataFrameTable(columns, data= [], transformed_data=rows, expand_structs= expand_structs)
-        return new_tab
-    elif kind == "struct":
-        columns = copy.deepcopy(column["field_type"].fields)
-        rows = copy.deepcopy([cell["value"]])
         new_tab = DataFrameTable(columns, data= [], transformed_data=rows, expand_structs= expand_structs)
         return new_tab
 

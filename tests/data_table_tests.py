@@ -304,36 +304,116 @@ class TestDataTable:
             ["2", str(inner_row2)[:DataFrameTable.TEXT_LEN], *[str(v["value"]) for v in inner_expected_row2["row"]]]]
 
 
-    # def test_embedded_array_of_struct_field_expansion(self) -> None:
-    #     schema = [
-    #         StructField("row_id1", IntegerType()),
-    #         StructField("struct1", ArrayType(StructType([
-    #             StructField("row_id2", IntegerType()),
-    #             StructField("struct2", ArrayType(StructType([
-    #                 StructField("row_id3", IntegerType()),
-    #                 StructField("row_value3", IntegerType())
-    #             ])))])))]
-    #     rows = [Row(
-    #         row_id1=1,
-    #         struct1 = [Row(
-    #             row_id2=11,
-    #             struct2 = [Row(
-    #                 row_id3=111, row_value3=911
-    #             )])])]
-    #
-    #     tab = DataFrameTable(schema, data = rows, expand_structs = True)
-    #
-    #     expected_cols = [
-    #         {'col_index': 0, 'name': 'row_id1', 'kind': 'simple', 'type': 'IntegerType', 'field_type': IntegerType()},
-    #         {'col_index': 1, 'name': 'struct1', 'kind': 'array', 'type': 'ArrayType', 'field_type': schema[1].dataType.elementType}
-    #     ]
-    #
-    #     print("TAB.LEVEL1")
-    #     print(tab.columns)
-    #     print(tab.rows)
-    #
-    #     expected_rows = [{"row_index": 0, "row": [{"display_value": "1", "value": 1},{"display_value": str(rows[0].struct1)[:DataFrameTable.TEXT_LEN]}]}]
-    #     print(expected_rows)
-    #
-    #     assert tab.columns==expected_cols
-    #     assert tab.rows == expected_rows
+    def test_embedded_array_of_struct_field_expansion(self) -> None:
+        schema = [
+            StructField("row_id1", IntegerType()),
+            StructField("struct1", ArrayType(StructType([
+                StructField("row_id2", IntegerType()),
+                StructField("struct2", ArrayType(StructType([
+                    StructField("row_id3", IntegerType()),
+                    StructField("row_value3", IntegerType())
+                ])))])))]
+        rows = [Row(
+            row_id1=1,
+            struct1 = [Row(
+                row_id2=11,
+                struct2 = [Row(
+                    row_id3=111, row_value3=911
+                )])])]
+
+        tab = DataFrameTable(schema, data = rows, expand_structs = True)
+
+        expected_cols = [
+            {'col_index': 0, 'name': 'row_id1', 'kind': 'simple', 'type': 'IntegerType', 'field_type': IntegerType()},
+            {'col_index': 1, 'name': 'struct1', 'kind': 'array', 'type': 'ArrayType', 'field_type': schema[1].dataType.elementType}
+        ]
+
+        print("TAB.LEVEL1")
+        print(tab.columns)
+        print(tab.rows)
+
+        expected_rows = [
+            {"row_index": 0, "row": [
+                {"display_value": "1", "value": 1},
+                {"display_value": str(rows[0].struct1)[:DataFrameTable.TEXT_LEN], "value": [
+                    {"row_index": 0, "row": [
+                        {"display_value": str(rows[0].struct1[0])[:DataFrameTable.TEXT_LEN], "value":
+                            {"row_index": 0, "row": [
+                                {"display_value": "11", "value": 11},
+                                {"display_value": str(rows[0].struct1[0].struct2)[:DataFrameTable.TEXT_LEN], "value": [
+                                    {"row_index": 0, "row": [
+                                        {"display_value": str(rows[0].struct1[0].struct2[0])[:DataFrameTable.TEXT_LEN], "value":
+                                            {"row_index": 0, "row": [
+                                                {"display_value": "111", "value": 111},
+                                                {"display_value": "911", "value": 911}
+                                            ]}
+                                        }]
+                                     }]
+                                }]
+                            }
+                         }]
+                    }]
+                }]
+             }]
+        print(expected_rows)
+
+        assert tab.columns==expected_cols
+        assert tab.rows == expected_rows
+
+        # now extract embedded table for struct1
+        tab2 = extract_embedded_table(tab, 1,0,expand_structs = True)
+
+        print("TAB.LEVEL2")
+        print(tab2.columns)
+        print(tab2.rows)
+
+        expected_cols2 = [
+            {'col_index': 0, 'name': 'struct1', 'kind': 'struct', 'type': 'StructType', 'field_type': schema[1].dataType.elementType},
+            {'col_index': 1, 'name': '*row_id2', 'kind': 'simple', 'type': 'IntegerType', 'field_type': IntegerType()},
+            {'col_index': 2, 'name': '*struct2', 'kind': 'array', 'type': 'ArrayType',
+             'field_type': schema[1].dataType.elementType[1].dataType}
+        ]
+
+        assert tab2.columns==expected_cols2
+
+        expected_rows2 = [
+            {"row_index": 0, "row": [
+                {"display_value": str(rows[0].struct1[0])[:DataFrameTable.TEXT_LEN], "value":
+                    {"row_index": 0, "row": [
+                        {"display_value": "11", "value": 11},
+                        {"display_value": str(rows[0].struct1[0].struct2)[:DataFrameTable.TEXT_LEN], "value": [
+                            {"row_index": 0, "row": [
+                                {"display_value": str(rows[0].struct1[0].struct2[0])[:DataFrameTable.TEXT_LEN], "value":
+                                    {"row_index": 0, "row": [
+                                        {"display_value": "111", "value": 111},
+                                        {"display_value": "911", "value": 911}
+                                    ]}
+                                 }]
+                             }]
+                         }]
+                     }
+                 },
+                {"display_value": "11", "value": 11},
+                {"display_value": str(rows[0].struct1[0].struct2)[:DataFrameTable.TEXT_LEN], "value": [
+                    {"row_index": 0, "row": [
+                        {"display_value": "Row(row_id3=111, row_value3=911)", "value":
+                            {"row_index": 0, "row": [
+                                {"display_value": "111", "value": 111},
+                                {"display_value": "911", "value": 911}
+                            ]}
+                         }
+                    ]}
+                ]}]
+            }]
+
+        print(expected_rows2)
+
+        assert tab2.rows==expected_rows2
+
+        # now extract embedded table for struct2
+        tab3 = extract_embedded_table(tab2, 0,0,expand_structs = True)
+
+        print("TAB.LEVEL3")
+        print(tab3.columns)
+        print(tab3.rows)
+

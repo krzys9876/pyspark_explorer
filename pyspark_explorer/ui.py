@@ -119,14 +119,12 @@ class DataApp(App):
         dv_status = self.__bottom_mid_status__()
         dv_status.update(cell_dv)
         type_status = self.__bottom_left_status__()
-        type_status.update(f"{column["name"]}\n  {column["type"]}\n  {column["kind"]}")
-        
-
+        type_status.update(f"{column["name"]}\n  {column["type"]}/{column["field_type"].typeName()}\n  {column["kind"]}")
 
     @on(DataTable.CellSelected, "#main_table")
     def cell_selected(self, event: DataTable.CellSelected):
         x, y, _, _ = self.__selected_cell_info__()
-        embedded_tab = extract_embedded_table(self.tab, x, y, True)
+        embedded_tab = extract_embedded_table(self.tab, x, y, expand_structs = True)
         if embedded_tab is None:
             self.notify("no further details available")
         else:
