@@ -305,6 +305,7 @@ class TestDataTable:
 
 
     def test_embedded_array_of_struct_field_expansion(self) -> None:
+        # this test is quite long but this form should be readable enough
         schema = [
             StructField("row_id1", IntegerType()),
             StructField("struct1", ArrayType(StructType([
@@ -327,10 +328,6 @@ class TestDataTable:
             {'col_index': 0, 'name': 'row_id1', 'kind': 'simple', 'type': 'IntegerType', 'field_type': IntegerType()},
             {'col_index': 1, 'name': 'struct1', 'kind': 'array', 'type': 'ArrayType', 'field_type': schema[1].dataType.elementType}
         ]
-
-        print("TAB.LEVEL1")
-        print(tab.columns)
-        print(tab.rows)
 
         expected_rows = [
             {"row_index": 0, "row": [
@@ -355,7 +352,6 @@ class TestDataTable:
                     }]
                 }]
              }]
-        print(expected_rows)
 
         assert tab.columns==expected_cols
         assert tab.rows == expected_rows
@@ -363,15 +359,12 @@ class TestDataTable:
         # now extract embedded table for struct1
         tab2 = extract_embedded_table(tab, 1,0,expand_structs = True)
 
-        print("TAB.LEVEL2")
-        print(tab2.columns)
-        print(tab2.rows)
-
         expected_cols2 = [
             {'col_index': 0, 'name': 'struct1', 'kind': 'struct', 'type': 'StructType', 'field_type': schema[1].dataType.elementType},
             {'col_index': 1, 'name': '*row_id2', 'kind': 'simple', 'type': 'IntegerType', 'field_type': IntegerType()},
             {'col_index': 2, 'name': '*struct2', 'kind': 'array', 'type': 'ArrayType',
-             'field_type': schema[1].dataType.elementType[1].dataType}
+             # here we drill down from array to array contents (elementType)
+             'field_type': schema[1].dataType.elementType[1].dataType.elementType}
         ]
 
         assert tab2.columns==expected_cols2
@@ -406,14 +399,34 @@ class TestDataTable:
                 ]}]
             }]
 
-        print(expected_rows2)
-
         assert tab2.rows==expected_rows2
 
         # now extract embedded table for struct2
         tab3 = extract_embedded_table(tab2, 0,0,expand_structs = True)
 
-        print("TAB.LEVEL3")
-        print(tab3.columns)
-        print(tab3.rows)
+        expected_cols3 = [
+            {'col_index': 0, 'name': 'row_id2', 'kind': 'simple', 'type': 'IntegerType', 'field_type': IntegerType()},
+            {'col_index': 1, 'name': 'struct2', 'kind': 'array', 'type': 'ArrayType',
+             # here we drill down from array to array contents (elementType)
+             'field_type': schema[1].dataType.elementType[1].dataType.elementType}
+        ]
 
+        assert tab3.columns==expected_cols3
+
+        expected_rows3 = [
+            {"row_index": 0, "row": [
+                {"display_value": "11", "value": 11},
+                {"display_value": str(rows[0].struct1[0].struct2)[:DataFrameTable.TEXT_LEN], "value": [
+                    {"row_index": 0, "row": [
+                        {"display_value": str(rows[0].struct1[0].struct2[0])[:DataFrameTable.TEXT_LEN], "value":
+                            {"row_index": 0, "row": [
+                                {"display_value": "111", "value": 111},
+                                {"display_value": "911", "value": 911}
+                            ]}
+                         },
+                    ]}
+                ]}
+            ]}
+        ]
+
+        assert tab3.rows==expected_rows3

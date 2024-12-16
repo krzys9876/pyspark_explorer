@@ -27,7 +27,7 @@ class DataFrameTable:
             self.__expand_structs__()
 
 
-    def __kind_from_type__(self, field: StructField) -> str:
+    def __extract_kind__(self, field: StructField) -> str:
         if type(field.dataType) == StructType:
             kind = "struct"
         elif type(field.dataType) == ArrayType:
@@ -48,8 +48,9 @@ class DataFrameTable:
             col_index += 1
             if col["kind"] == "struct":
                 for fi,field in enumerate(col["field_type"].fields):
-                    kind = self.__kind_from_type__(field)
-                    new_col = {"col_index": col_index, "name": f"*{field.name}", "kind": kind, "type": type(field.dataType).__name__, "field_type": field.dataType}
+                    kind = self.__extract_kind__(field)
+                    field_type = self.__extract_type__(field)
+                    new_col = {"col_index": col_index, "name": f"*{field.name}", "kind": kind, "type": type(field.dataType).__name__, "field_type": field_type}
                     new_cols.append(new_col)
 
                     for row in new_rows:
@@ -64,15 +65,20 @@ class DataFrameTable:
         self.__extract_row_values__()
 
 
+    def __extract_type__(self, field) -> StructType:
+        # extract inner type from ArrayType, return field type otherwise
+        if type(field.dataType) == ArrayType:
+            return field.dataType.elementType
+
+        return field.dataType
+
+
     def __extract_columns__(self) -> None:
         cols = []
         for i,field in enumerate(self._schema):
-            if type(field.dataType) == ArrayType:
-                field_type = field.dataType.elementType
-            else:
-                field_type = field.dataType
+            field_type = self.__extract_type__(field)
 
-            kind = self.__kind_from_type__(field)
+            kind = self.__extract_kind__(field)
             cols.append({"col_index": i, "name": field.name, "kind": kind, "type": type(field.dataType).__name__, "field_type": field_type})
 
         self.columns = cols
