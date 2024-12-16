@@ -6,6 +6,7 @@ class DataFrameTable:
     TEXT_LEN = 50
     TAKE_ROWS = 100
 
+    # allow original rows (Row type) or previously transformed rows (when drilling to details)
     def __init__(self, schema: [StructField], data: [Row] = [], transformed_data = [], expand_structs: bool = False):
         self._schema: [StructField] = schema
         self._data: [Row] = data
@@ -20,8 +21,7 @@ class DataFrameTable:
         if len(data):
             self.__extract_rows__()
         else:
-            self.rows = transformed_data
-            self.__extract_row_values__()
+            self.__set_rows__(transformed_data)
 
         if self._expand_structs:
             self.__expand_structs__()
@@ -117,10 +117,10 @@ class DataFrameTable:
 
             rows.append({"row_index": ri, "row": row})
 
-        self.set_rows(rows)
+        self.__set_rows__(rows)
 
 
-    def set_rows(self, rows: []) -> None:
+    def __set_rows__(self, rows: []) -> None:
         self.rows = rows
         self.__extract_row_values__()
 
