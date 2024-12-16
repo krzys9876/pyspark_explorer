@@ -70,7 +70,7 @@ class TestSparkDataTable:
         expected_rows = [
             {'row_index': 0,'row': [
                 {'display_value': '1', 'value': 1},
-                {'display_value': "[Row(num=101, text='aaa'), Row(num=201, text='bbb')]"[:DataFrameTable.TEXT_LEN],
+                {'display_value': "[Row(num=101, text='aaa'), Row(num=201, text='bbb')]",
                 'value': [{'row_index': 0, 'row': [{'display_value': "Row(num=101, text='aaa')",
                     'value':
                         {'row_index': 0, 'row': [
