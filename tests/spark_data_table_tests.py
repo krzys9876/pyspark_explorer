@@ -85,7 +85,7 @@ class TestSparkDataTable:
 
             {'row_index': 1,'row': [
                 {'display_value': '2', 'value': 2},
-                {'display_value': "[Row(num=102, text='ccc'), Row(num=202, text='ddd')]"[:DataFrameTable.TEXT_LEN],
+                {'display_value': "[Row(num=102, text='ccc'), Row(num=202, text='ddd')]",
                 'value': [{'row_index': 0, 'row': [
                     {'display_value': "Row(num=102, text='ccc')",
                     'value':
