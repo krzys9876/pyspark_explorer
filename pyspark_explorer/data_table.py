@@ -152,7 +152,8 @@ def extract_embedded_table(tab: DataFrameTable, x: int, y: int, expand_structs: 
 
     # other case for array
     if kind=="array":
-        columns = copy.deepcopy([StructField(column["name"], column["field_type"])])
+        col_name = column["name"][1:] if column["name"].startswith("*") else column["name"]
+        columns = copy.deepcopy([StructField(col_name, column["field_type"])])
         rows = copy.deepcopy(cell["value"])
         new_tab = DataFrameTable(columns, data= [], transformed_data=rows, expand_structs= expand_structs)
         return new_tab
