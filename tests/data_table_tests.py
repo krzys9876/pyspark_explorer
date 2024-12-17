@@ -453,16 +453,6 @@ class TestDataTable:
 
         assert tab.schema_tree == expected_tree
 
-        # [
-        #     StructField("row_id1", IntegerType()),
-        #     StructField("struct1", ArrayType(StructType([
-        #         StructField("row_id2", IntegerType()),
-        #         StructField("struct2", ArrayType(StructType([
-        #             StructField("row_id3", IntegerType()),
-        #             StructField("row_value3", IntegerType())
-        #         ])))])))]
-
-
 
     def test_generate_structure_as_tree_with_embedded_struct(self) -> None:
         schema = [
