@@ -1,7 +1,8 @@
 from textual import on
 from textual.app import App, ComposeResult
 from textual.binding import Binding
-from textual.widgets import DataTable, Header, Footer, Static, Input, Tree
+from textual.containers import Vertical
+from textual.widgets import DataTable, Header, Footer, Static, Input, Tree, TabbedContent, RadioSet, RadioButton
 from textual.widgets._tree import TreeNode
 
 from pyspark_explorer.data_table import DataFrameTable, extract_embedded_table
@@ -22,7 +23,7 @@ class DataApp(App):
             grid-columns: 1fr 5fr 1fr;
             grid-rows: 3 5fr 5;
         }
-        #top_status {
+        #top_status_container {
             background: $secondary;
             height: 100%;
         }
@@ -31,7 +32,8 @@ class DataApp(App):
             background: $secondary;
             height: 100%;
         }
-        #main_tree {
+        #left_container {
+            background: $boost;
             height: 100%;
         }
         #main_table {
@@ -56,14 +58,26 @@ class DataApp(App):
         #Binding(key="question_mark", action="help", description="Show help screen", key_display="?"),
         Binding(key="r", action="reload_table", description="Reload table"),
         Binding(key="u", action="refresh_table", description="Refresh table", show=False),
-        #Binding(key="j", action="down", description="Scroll down", show=False),
     ]
 
     def compose(self) -> ComposeResult:
         yield Header()
-        yield Static("", id="top_status")
+        with Vertical(id="top_status_container"):
+            yield Static("", id="top_status")
         yield Input(id="top_input")
-        yield Tree("", id="main_tree")
+        with Vertical(id="left_container"):
+            with TabbedContent("Files", "Structure"):
+                # Files tab
+                with Vertical(id="files_container"):
+                    with RadioSet(id="file_type"):
+                        yield RadioButton("PARQUET")
+                        yield RadioButton("JSON", value=True)
+                        yield RadioButton("CSV")
+                    yield Tree("",id="file_tree")
+
+                # Structure tab
+                yield Tree("",id="struct_tree")
+
         yield DataTable(id="main_table")
         yield Static("", id="bottom_left_status")
         yield Static("", id="bottom_mid_status")
@@ -77,8 +91,11 @@ class DataApp(App):
     def __top_status__(self) -> Static:
         return self.get_widget_by_id(id="top_status", expect_type=Static)
 
-    def __main_tree__(self) -> Tree:
-        return self.get_widget_by_id(id="main_tree", expect_type=Tree)
+    def __struct_tree__(self) -> Tree:
+        return self.get_widget_by_id(id="struct_tree", expect_type=Tree)
+
+    def __files_tree__(self) -> Tree:
+        return self.get_widget_by_id(id="files_tree", expect_type=Tree)
 
     def __top_input__(self) -> Input:
         return self.get_widget_by_id(id="top_input", expect_type=Input)
@@ -89,8 +106,14 @@ class DataApp(App):
     def __bottom_mid_status__(self) -> Static:
         return self.get_widget_by_id(id="bottom_mid_status", expect_type=Static)
 
+
     def on_mount(self) -> None:
         self.set_focus(self.__main_table__())
+
+
+    def on_radio_set_changed(self, event: RadioSet.Changed) -> None:
+        if event.radio_set.id=="file_type":
+            self.notify(f"{event.index}")
 
 
     def load_data(self) -> None:
@@ -115,7 +138,7 @@ class DataApp(App):
 
 
     def load_structure(self) -> None:
-        tree: Tree = self.__main_tree__()
+        tree: Tree = self.__struct_tree__()
         tree.clear()
         tree.show_root = False
         tree.auto_expand = True
@@ -133,7 +156,7 @@ class DataApp(App):
 
     def action_refresh_table(self) -> None:
         # experimental - refresh by getting table out of focus and focus again, no other method worked (refresh etc.)
-        self.set_focus(self.__main_tree__())
+        self.set_focus(self.__struct_tree__())
         self.set_focus(self.__main_table__())
 
 
