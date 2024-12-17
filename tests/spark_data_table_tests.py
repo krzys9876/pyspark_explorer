@@ -70,14 +70,14 @@ class TestSparkDataTable:
         expected_rows = [
             {'row_index': 0,'row': [
                 {'display_value': '1', 'value': 1},
-                {'display_value': "[Row(num=101, text='aaa'), Row(num=201, text='bbb')]",
-                'value': [{'row_index': 0, 'row': [{'display_value': "Row(num=101, text='aaa')",
+                {'display_value': "(num=101, text='aaa'), (num=201, text='bbb')",
+                'value': [{'row_index': 0, 'row': [{'display_value': "num=101, text='aaa'",
                     'value':
                         {'row_index': 0, 'row': [
                             {'display_value': '101', 'value': 101},
                             {'display_value': 'aaa', 'value': 'aaa'}]}}]},
                         {'row_index': 1, 'row': [
-                            {'display_value': "Row(num=201, text='bbb')",
+                            {'display_value': "num=201, text='bbb'",
                             'value':
                                 {'row_index': 0, 'row': [
                                     {'display_value': '201', 'value': 201},
@@ -85,15 +85,15 @@ class TestSparkDataTable:
 
             {'row_index': 1,'row': [
                 {'display_value': '2', 'value': 2},
-                {'display_value': "[Row(num=102, text='ccc'), Row(num=202, text='ddd')]",
+                {'display_value': "(num=102, text='ccc'), (num=202, text='ddd')",
                 'value': [{'row_index': 0, 'row': [
-                    {'display_value': "Row(num=102, text='ccc')",
+                    {'display_value': "num=102, text='ccc'",
                     'value':
                         {'row_index': 0, 'row': [
                             {'display_value': '102', 'value': 102},
                             {'display_value': 'ccc', 'value': 'ccc'}]}}]},
                         {'row_index': 1, 'row': [
-                            {'display_value': "Row(num=202, text='ddd')",
+                            {'display_value': "num=202, text='ddd'",
                             'value':
                                 {'row_index': 0, 'row': [
                                     {'display_value': '202', 'value': 202},

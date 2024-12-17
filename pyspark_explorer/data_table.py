@@ -1,3 +1,5 @@
+from typing import Any
+
 from pyspark.sql.types import StructField, Row, StructType, ArrayType, DataType
 import copy
 
@@ -153,16 +155,16 @@ class DataFrameTable:
                     # specify row schema in a form of name = value
                     values_as_row = list(map(lambda r: Row(**{self.columns[fi]["name"] : r}), data_row[field]))
                     value = DataFrameTable([column], values_as_row).rows
-                    display_value = str(data_row[field])
+                    display_value = self.disp_value(data_row[field])
                 elif self.columns[fi]["kind"] == "struct":
                     # extract internal schema as an array of fields
                     inner_schema = self.columns[fi]["field_type"].fields
                     # a value is just a single Row, so we must pack it as an array and then unpack it
                     value = DataFrameTable(inner_schema, [data_row[field]]).rows[0]
-                    display_value = str(data_row[field])
+                    display_value = self.disp_value(data_row[field])
                 else:
                     value = data_row[field]
-                    display_value = str(value)
+                    display_value = self.disp_value(value)
 
                 row.append({"display_value": display_value, "value": value})
 
@@ -183,6 +185,16 @@ class DataFrameTable:
 
     def select(self, x: int, y: int) -> ({}, {}):
         return self.columns[x], self.rows[y]["row"][x]
+
+
+    @staticmethod
+    def disp_value(value: Any) -> str:
+        disp_value = str(value)
+        # remove single "Row(...)"
+        disp_value = disp_value[4:-1] if disp_value.startswith("Row(") and disp_value.endswith(")") else disp_value
+        # remove "Row" from array "[Row(...), ... , Row(...)]"
+        disp_value = disp_value[4:-1].replace("), Row(", "), (") if disp_value.startswith("[Row(") and disp_value.endswith(")]") else disp_value
+        return disp_value
 
 
 def extract_embedded_table(tab: DataFrameTable, x: int, y: int, expand_structs: bool = False) -> DataFrameTable | None:
