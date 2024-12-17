@@ -1,8 +1,8 @@
-from os import walk
 from textual import on
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.widgets import DataTable, Header, Footer, Static, Input, Tree
+from textual.widgets._tree import TreeNode
 
 from pyspark_explorer.data_table import DataFrameTable, extract_embedded_table
 
@@ -103,19 +103,25 @@ class DataApp(App):
         self.action_refresh_table()
 
 
+    @staticmethod
+    def __add_subfields_to_tree(field_info: {}, node: TreeNode):
+        if field_info["kind"] == "simple":
+            node.add_leaf(f"{field_info["name"]} ({field_info["type"]})", data=field_info)
+        else:
+            added = node.add(f"{field_info["name"]} ({field_info["type"]})", data=field_info)
+            for subfield in field_info["subfields"]:
+                DataApp.__add_subfields_to_tree(subfield, added)
+            added.expand()
+
+
     def load_structure(self) -> None:
         tree: Tree = self.__main_tree__()
         tree.clear()
         tree.show_root = False
         tree.auto_expand = True
 
-        for c in self.tab.columns:
-            if c["kind"]=="simple":
-                tree.root.add_leaf(f"{c["name"]} ({c["type"]})", data=c)
-            elif c["kind"]=="array":
-                tree.root.add(f"{c["name"]} ({c["type"]})", data=c)
-            elif c["kind"]=="struct":
-                tree.root.add(f"{c["name"]} ({c["type"]})", data=c)
+        for f in self.tab.schema_tree:
+            self.__add_subfields_to_tree(f, tree.root)
 
 
     def action_reload_table(self) -> None:
@@ -127,7 +133,7 @@ class DataApp(App):
 
     def action_refresh_table(self) -> None:
         # experimental - refresh by getting table out of focus and focus again, no other method worked (refresh etc.)
-        self.set_focus(self.__top_input__())
+        self.set_focus(self.__main_tree__())
         self.set_focus(self.__main_table__())
 
 
