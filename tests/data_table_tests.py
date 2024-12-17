@@ -303,9 +303,9 @@ class TestDataTable:
             ["2", str(inner_row2)[:DataFrameTable.TEXT_LEN], *[str(v["value"]) for v in inner_expected_row2["row"]]]]
 
 
-    def test_embedded_array_of_struct_field_expansion(self) -> None:
-        # this test is quite long but this form should be readable enough
-        schema = [
+    @staticmethod
+    def __double_embedded_struct__() -> [StructField]:
+        return [
             StructField("row_id1", IntegerType()),
             StructField("struct1", ArrayType(StructType([
                 StructField("row_id2", IntegerType()),
@@ -313,6 +313,11 @@ class TestDataTable:
                     StructField("row_id3", IntegerType()),
                     StructField("row_value3", IntegerType())
                 ])))])))]
+
+
+    def test_embedded_array_of_struct_field_expansion(self) -> None:
+        # this test is quite long but this form should be readable enough
+        schema = self.__double_embedded_struct__()
         rows = [Row(
             row_id1=1,
             struct1 = [Row(
@@ -429,3 +434,57 @@ class TestDataTable:
         ]
 
         assert tab3.rows==expected_rows3
+
+    def test_generate_structure_as_tree_with_embedded_array(self) -> None:
+        schema = self.__double_embedded_struct__()
+
+        tab = DataFrameTable(schema = schema, data=[], expand_structs = False)
+
+        expected_tree = [
+            {"name": "row_id1", "kind": "simple", "type": "IntegerType", "subfields": []},
+            {"name": "struct1", "kind": "array", "type": "ArrayType", "subfields": [
+                {"name": "row_id2", "kind": "simple", "type": "IntegerType", "subfields": []},
+                {"name": "struct2", "kind": "array", "type": "ArrayType", "subfields": [
+                    {"name": "row_id3", "kind": "simple", "type": "IntegerType", "subfields": []},
+                    {"name": "row_value3", "kind": "simple", "type": "IntegerType", "subfields": []}
+                ]}
+            ]}
+        ]
+
+        assert tab.schema_tree == expected_tree
+
+        # [
+        #     StructField("row_id1", IntegerType()),
+        #     StructField("struct1", ArrayType(StructType([
+        #         StructField("row_id2", IntegerType()),
+        #         StructField("struct2", ArrayType(StructType([
+        #             StructField("row_id3", IntegerType()),
+        #             StructField("row_value3", IntegerType())
+        #         ])))])))]
+
+
+
+    def test_generate_structure_as_tree_with_embedded_struct(self) -> None:
+        schema = [
+            StructField("row_id1", IntegerType()),
+            StructField("struct1", ArrayType(StructType([
+                StructField("row_id2", IntegerType()),
+                StructField("struct2", StructType([
+                    StructField("row_id3", IntegerType()),
+                    StructField("row_value3", IntegerType())
+                ]))])))]
+
+        tab = DataFrameTable(schema = schema, data=[], expand_structs = False)
+
+        expected_tree = [
+            {"name": "row_id1", "kind": "simple", "type": "IntegerType", "subfields": []},
+            {"name": "struct1", "kind": "array", "type": "ArrayType", "subfields": [
+                {"name": "row_id2", "kind": "simple", "type": "IntegerType", "subfields": []},
+                {"name": "struct2", "kind": "struct", "type": "StructType", "subfields": [
+                    {"name": "row_id3", "kind": "simple", "type": "IntegerType", "subfields": []},
+                    {"name": "row_value3", "kind": "simple", "type": "IntegerType", "subfields": []}
+                ]}
+            ]}
+        ]
+
+        assert tab.schema_tree == expected_tree

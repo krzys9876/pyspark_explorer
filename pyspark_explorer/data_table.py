@@ -1,4 +1,4 @@
-from pyspark.sql.types import StructField, Row, StructType, ArrayType
+from pyspark.sql.types import StructField, Row, StructType, ArrayType, DataType
 import copy
 
 
@@ -18,6 +18,7 @@ class DataFrameTable:
 
         self.columns = []
         self.column_names = []
+        self.schema_tree = []
         self.rows = []
         self.row_values = []
         self.__extract_columns__()
@@ -79,6 +80,49 @@ class DataFrameTable:
         return field.dataType
 
 
+    @staticmethod
+    def __extract_embedded_schema_tree__(fields: [StructField]) -> []:
+        subfields = []
+        for f in fields:
+            subfield = {"name": f.name, "kind": DataFrameTable.__extract_kind__(f), "type": type(f.dataType).__name__}
+            if subfield["kind"] == "array":
+                embedded_subfields = DataFrameTable.__extract_embedded_array_to_tree__(f.dataType)
+            elif subfield["kind"] == "struct":
+                embedded_subfields = DataFrameTable.__extract_embedded_schema_tree__(f.dataType.fields)
+            else:
+                embedded_subfields = []
+            subfield["subfields"] = embedded_subfields
+            subfields.append(subfield)
+        return subfields
+
+
+    @staticmethod
+    def __extract_embedded_array_to_tree__(subfield: DataType) -> []:
+        if type(subfield) == StructType:
+            subfields = DataFrameTable.__extract_embedded_schema_tree__(subfield.fields)
+        elif type(subfield) == ArrayType:
+            subfields = DataFrameTable.__extract_embedded_array_to_tree__(subfield.elementType)
+        else:
+            subfields = [{"name": "", "kind": "simple", "type": type(subfield).__name__, "subfields": []}]
+
+        return subfields
+
+    def __extract_schema_tree__(self) -> None:
+        tree = []
+        for col in self.columns:
+            tree_field = {"name": col["name"], "kind": col["kind"], "type": col["type"]}
+            if col["kind"] == "array":
+                subfields = self.__extract_embedded_array_to_tree__(col["field_type"])
+            elif col["kind"] == "struct":
+                subfields = self.__extract_embedded_schema_tree__(col["field_type"])
+            else:
+                subfields = []
+            tree_field["subfields"] = subfields
+            tree.append(tree_field)
+
+        self.schema_tree = tree
+
+
     def __extract_columns__(self) -> None:
         cols = []
         for i,field in enumerate(self._schema):
@@ -89,6 +133,7 @@ class DataFrameTable:
 
         self.columns = cols
         self.__extract_column_names__()
+        self.__extract_schema_tree__()
 
 
     def __extract_column_names__(self) -> None:
