@@ -26,7 +26,7 @@ class DataApp(App):
             background: $secondary;
             height: 100%;
         }
-        #path {
+        #top_input {
             column-span: 2;
             background: $secondary;
             height: 100%;
@@ -55,13 +55,14 @@ class DataApp(App):
         Binding(key="^q", action="quit", description="Quit the app"),
         #Binding(key="question_mark", action="help", description="Show help screen", key_display="?"),
         Binding(key="r", action="reload_table", description="Reload table"),
+        Binding(key="u", action="refresh_table", description="Refresh table", show=False),
         #Binding(key="j", action="down", description="Scroll down", show=False),
     ]
 
     def compose(self) -> ComposeResult:
         yield Header()
         yield Static("", id="top_status")
-        yield Input(id="path")
+        yield Input(id="top_input")
         yield Static("", id="mid_status")
         yield DataTable(id="main_table")
         yield Static("", id="bottom_left_status")
@@ -75,6 +76,9 @@ class DataApp(App):
 
     def __top_status__(self) -> Static:
         return self.get_widget_by_id(id="top_status", expect_type=Static)
+
+    def __top_input__(self) -> Input:
+        return self.get_widget_by_id(id="top_input", expect_type=Input)
 
     def __bottom_left_status__(self) -> Static:
         return self.get_widget_by_id(id="bottom_left_status", expect_type=Static)
@@ -93,12 +97,19 @@ class DataApp(App):
         data_table.add_columns(*self.tab.column_names)
         data_table.add_rows(self.tab.row_values)
         data_table.loading = False
+        self.action_refresh_table()
 
 
     def action_reload_table(self) -> None:
         self.notify("refreshing...")
         self.tab = self.orig_tab
         self.load_data()
+
+
+    def action_refresh_table(self) -> None:
+        # experimental - refresh by getting table out of focus and focus again, no other method worked (refresh etc.)
+        self.set_focus(self.__top_input__())
+        self.set_focus(self.__main_table__())
 
 
     def __selected_cell_info__(self) -> (int, int, {}):
@@ -119,7 +130,11 @@ class DataApp(App):
         dv_status = self.__bottom_mid_status__()
         dv_status.update(cell_dv)
         type_status = self.__bottom_left_status__()
-        type_status.update(f"{column["name"]}\n  {column["type"]}/{column["field_type"].typeName()}\n  {column["kind"]}")
+        status_text = f"{column["name"]}\n  {column["type"]}/{column["field_type"].typeName()}\n  {column["kind"]}"
+        if column["type"]=="ArrayType":
+            status_text = f"{status_text}\n  {len(cell["value"])} inner row(s)"
+
+        type_status.update(status_text)
 
     @on(DataTable.CellSelected, "#main_table")
     def cell_selected(self, event: DataTable.CellSelected):
