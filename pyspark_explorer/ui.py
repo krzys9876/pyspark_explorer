@@ -2,7 +2,7 @@ from os import walk
 from textual import on
 from textual.app import App, ComposeResult
 from textual.binding import Binding
-from textual.widgets import DataTable, Header, Footer, Static, Input
+from textual.widgets import DataTable, Header, Footer, Static, Input, Tree
 
 from pyspark_explorer.data_table import DataFrameTable, extract_embedded_table
 
@@ -31,7 +31,7 @@ class DataApp(App):
             background: $secondary;
             height: 100%;
         }
-        #mid_status {
+        #main_tree {
             height: 100%;
         }
         #main_table {
@@ -63,7 +63,7 @@ class DataApp(App):
         yield Header()
         yield Static("", id="top_status")
         yield Input(id="top_input")
-        yield Static("", id="mid_status")
+        yield Tree("", id="main_tree")
         yield DataTable(id="main_table")
         yield Static("", id="bottom_left_status")
         yield Static("", id="bottom_mid_status")
@@ -76,6 +76,9 @@ class DataApp(App):
 
     def __top_status__(self) -> Static:
         return self.get_widget_by_id(id="top_status", expect_type=Static)
+
+    def __main_tree__(self) -> Tree:
+        return self.get_widget_by_id(id="main_tree", expect_type=Tree)
 
     def __top_input__(self) -> Input:
         return self.get_widget_by_id(id="top_input", expect_type=Input)
@@ -100,10 +103,26 @@ class DataApp(App):
         self.action_refresh_table()
 
 
+    def load_structure(self) -> None:
+        tree: Tree = self.__main_tree__()
+        tree.clear()
+        tree.show_root = False
+        tree.auto_expand = True
+
+        for c in self.tab.columns:
+            if c["kind"]=="simple":
+                tree.root.add_leaf(f"{c["name"]} ({c["type"]})", data=c)
+            elif c["kind"]=="array":
+                tree.root.add(f"{c["name"]} ({c["type"]})", data=c)
+            elif c["kind"]=="struct":
+                tree.root.add(f"{c["name"]} ({c["type"]})", data=c)
+
+
     def action_reload_table(self) -> None:
         self.notify("refreshing...")
         self.tab = self.orig_tab
         self.load_data()
+        self.load_structure()
 
 
     def action_refresh_table(self) -> None:
