@@ -1,3 +1,4 @@
+from pyspark.sql.session import SparkSession
 from textual import on
 from textual.app import App, ComposeResult
 from textual.binding import Binding
@@ -6,14 +7,17 @@ from textual.widgets import DataTable, Header, Footer, Static, Input, Tree, Tabb
 from textual.widgets._tree import TreeNode
 
 from pyspark_explorer.data_table import DataFrameTable, extract_embedded_table
+from pyspark_explorer.explorer import Explorer
 
 
 class DataApp(App):
 
-    def __init__(self, data: DataFrameTable, **kwargs):
+    def __init__(self, data: DataFrameTable, spark: SparkSession, base_path: str, **kwargs):
         super(DataApp, self).__init__(**kwargs)
         self.orig_tab: DataFrameTable = data
         self.tab = self.orig_tab
+        self.base_path = base_path
+        self.spark=spark
 
 
     CSS = """
@@ -56,8 +60,9 @@ class DataApp(App):
     BINDINGS = [
         Binding(key="^q", action="quit", description="Quit the app"),
         #Binding(key="question_mark", action="help", description="Show help screen", key_display="?"),
-        Binding(key="r", action="reload_table", description="Reload table"),
+        Binding(key="r", action="reload_table", description="Reload current file"),
         Binding(key="u", action="refresh_table", description="Refresh table", show=False),
+        Binding(key="d", action="refresh_current_directory", description="Refresh directory"),
     ]
 
     def compose(self) -> ComposeResult:
@@ -95,7 +100,7 @@ class DataApp(App):
         return self.get_widget_by_id(id="struct_tree", expect_type=Tree)
 
     def __files_tree__(self) -> Tree:
-        return self.get_widget_by_id(id="files_tree", expect_type=Tree)
+        return self.get_widget_by_id(id="file_tree", expect_type=Tree)
 
     def __top_input__(self) -> Input:
         return self.get_widget_by_id(id="top_input", expect_type=Input)
@@ -109,6 +114,9 @@ class DataApp(App):
 
     def on_mount(self) -> None:
         self.set_focus(self.__main_table__())
+        file_tree = self.__files_tree__()
+        file_tree.root.set_label("[]")
+        file_tree.root.data = Explorer.base_info(self.base_path)
 
 
     def on_radio_set_changed(self, event: RadioSet.Changed) -> None:
@@ -158,6 +166,31 @@ class DataApp(App):
         # experimental - refresh by getting table out of focus and focus again, no other method worked (refresh etc.)
         self.set_focus(self.__struct_tree__())
         self.set_focus(self.__main_table__())
+
+
+    def action_refresh_current_directory(self) -> None:
+        current_file = self.__files_tree__().cursor_node
+        if current_file is None:
+            self.notify(f"No file/directory selected")
+            return
+
+        if not current_file.data["is_dir"]:
+            self.notify(f"No directory is selected")
+            return
+
+        path = current_file.data["full_path"]
+        explorer = Explorer(self.spark, path)
+        explorer.refresh_directory()
+
+        self.notify(f"Refreshing {current_file.data["name"]}")
+        current_file.remove_children()
+        for f in explorer.current_dir_content:
+            if f["is_dir"]:
+                current_file.add(label=f"{f["name"]} (dir)", data=f)
+            else:
+                current_file.add_leaf(label=f"{f["name"]} {f["hr_size"]}", data=f)
+
+        current_file.expand()
 
 
     def __selected_cell_info__(self) -> (int, int, {}):
