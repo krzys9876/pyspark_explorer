@@ -115,8 +115,9 @@ class DataApp(App):
     def on_mount(self) -> None:
         self.set_focus(self.__main_table__())
         file_tree = self.__files_tree__()
-        file_tree.root.set_label("[]")
-        file_tree.root.data = Explorer.base_info(self.base_path)
+        base_info = Explorer(self.spark, self.base_path).base_info()
+        file_tree.root.set_label(f"{base_info["name"]} (dir)")
+        file_tree.root.data = base_info
 
 
     def on_radio_set_changed(self, event: RadioSet.Changed) -> None:
@@ -175,14 +176,14 @@ class DataApp(App):
             return
 
         if not current_file.data["is_dir"]:
-            self.notify(f"No directory is selected")
+            self.notify(f"File (not directory) is selected {current_file.data}")
             return
 
         path = current_file.data["full_path"]
         explorer = Explorer(self.spark, path)
         explorer.refresh_directory()
 
-        self.notify(f"Refreshing {current_file.data["name"]}")
+        self.notify(f"Refreshing {current_file.data["name"]} {current_file.data}")
         current_file.remove_children()
         for f in explorer.current_dir_content:
             if f["is_dir"]:

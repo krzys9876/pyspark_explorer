@@ -54,27 +54,35 @@ class Explorer:
         if self.params["sort_file_desc"]:
             l=list(reversed(l))
         for f in l[:self.params["file_limit"]]:
-            file_name = f.getPath().getName()
-            file = {"name": file_name, "full_path": f.getPath().toString(), "is_dir": f.isDirectory(),
-                "size": 0, "hr_size": "", "type": "dir"}
-            if f.isFile():
-                file_info = self.fs.getContentSummary(f.getPath())
-                file_type = "CSV" if file_name.lower().endswith(".csv") \
-                    else "JSON" if file_name.lower().endswith(".json") \
-                    else "PARQUET" if file_name.lower().endswith(".parquet") \
-                    else "UNKNOWN"
-                file["size"] = file_info.getLength()
-                file["hr_size"] = __human_readable_size__(file_info.getLength())
-                file["type"] = file_type
-
+            file = self.__file_info__(f.getPath())
             files.append(file)
 
         self.current_dir_content = files
 
 
-    @staticmethod
-    def base_info(base_path: str) -> {}:
-        return {"name": "[]", "full_path": base_path, "is_dir": True, "size": 0, "hr_size": "", "type": "dir"}
+    def __file_info__(self, path) -> {}:
+        file_info = self.fs.getContentSummary(path)
+        file_name = path.getName()
+        is_file = file_info.getDirectoryCount()==0 and file_info.getFileCount()==1
+        file = {"name": file_name, "full_path": path.toString(), "is_dir": not is_file,
+                "getDirectoryCount": file_info.getDirectoryCount(), "getFileCount": file_info.getFileCount(),
+                "size": 0, "hr_size": "", "type": ""}
+        if is_file:
+            file["size"] = file_info.getLength()
+            file["hr_size"] = __human_readable_size__(file_info.getLength())
+            file["type"] = "CSV" if file_name.lower().endswith(".csv") \
+                else "JSON" if file_name.lower().endswith(".json") \
+                else "PARQUET" if file_name.lower().endswith(".parquet") \
+                else "OTHER"
+
+        return file
+
+    def base_info(self) -> {}:
+        path = self.spark._jvm.org.apache.hadoop.fs.Path(self.init_path)
+        return self.__file_info__(path)
+
+        # st = self.fs.getFileStatus(self.spark._jvm.org.apache.hadoop.fs.Path(self.init_path))
+        # return {"name": "[]", "full_path": self.init_path, "is_dir": st.isDirectory(), "size": 0, "hr_size": "", "type": "dir"}
 
 
     def change_directory(self, index: int) -> bool:
