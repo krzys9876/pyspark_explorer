@@ -20,44 +20,14 @@ def __human_readable_size__(size: int) -> str:
 
 
 class Explorer:
-    def __init__(self, spark: SparkSession, init_path: str) -> None:
-        self.current_path = None
-        self.path_tree: [str] = []
+    def __init__(self, spark: SparkSession) -> None:
         self.spark = spark
-        self.init_path = __ensure_path_separator__(init_path)
         self.fs = spark._jvm.org.apache.hadoop.fs.FileSystem.get(spark._jsc.hadoopConfiguration())
-        self.current_dir_content:[dict] = []
         self.params = {
             "auto_refresh": True,
             "file_limit": 5,
             "sort_file_desc": True
         }
-
-        self.reset_path()
-
-
-    def reset_path(self) -> None:
-        self.path_tree = [self.init_path]
-        self.current_path = self.init_path
-        if self.params["auto_refresh"]:
-            self.refresh_directory()
-
-
-    def refresh_directory(self) -> None:
-        files: [dict] = []
-        st = self.fs.getFileStatus(self.spark._jvm.org.apache.hadoop.fs.Path(self.current_path))
-        if st.isFile():
-            self.current_dir_content = []
-            return
-
-        l = self.fs.listStatus(self.spark._jvm.org.apache.hadoop.fs.Path(self.current_path))
-        if self.params["sort_file_desc"]:
-            l=list(reversed(l))
-        for f in l[:self.params["file_limit"]]:
-            file = self.__file_info__(f.getPath())
-            files.append(file)
-
-        self.current_dir_content = files
 
 
     def __file_info__(self, path) -> {}:
@@ -77,33 +47,22 @@ class Explorer:
 
         return file
 
-    def base_info(self) -> {}:
-        path = self.spark._jvm.org.apache.hadoop.fs.Path(self.init_path)
-        return self.__file_info__(path)
 
-        # st = self.fs.getFileStatus(self.spark._jvm.org.apache.hadoop.fs.Path(self.init_path))
-        # return {"name": "[]", "full_path": self.init_path, "is_dir": st.isDirectory(), "size": 0, "hr_size": "", "type": "dir"}
+    def read_directory(self, path: str) -> []:
+        files: [dict] = []
+        st = self.fs.getFileStatus(self.spark._jvm.org.apache.hadoop.fs.Path(path))
+        if st.isFile():
+            return []
 
+        l = self.fs.listStatus(self.spark._jvm.org.apache.hadoop.fs.Path(path))
+        if self.params["sort_file_desc"]:
+            l = list(reversed(l))
+        for f in l[:self.params["file_limit"]]:
+            file = self.__file_info__(f.getPath())
+            files.append(file)
 
-    def change_directory(self, index: int) -> bool:
-        if len(self.current_dir_content)<=index:
-            return False
-
-        file_entry = self.current_dir_content[index]
-        if not file_entry["is_dir"]:
-            return False
-
-        self.current_path = __ensure_path_separator__(self.current_path+file_entry["name"])
-        self.path_tree.append(self.current_path)
-        if self.params["auto_refresh"]:
-            self.refresh_directory()
-        return True
+        return files
 
 
-    def change_to_parent(self) -> None:
-        path_len = len(self.path_tree)
-        if path_len>1:
-            self.current_path = self.path_tree[path_len-2]
-            self.path_tree = self.path_tree[:path_len-1]
-            if self.params["auto_refresh"]:
-                self.refresh_directory()
+    def file_info(self, path: str) -> {}:
+        return self.__file_info__(self.spark._jvm.org.apache.hadoop.fs.Path(path))

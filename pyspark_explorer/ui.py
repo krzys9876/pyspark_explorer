@@ -18,6 +18,7 @@ class DataApp(App):
         self.tab = self.orig_tab
         self.base_path = base_path
         self.spark=spark
+        self.explorer = Explorer(spark)
 
 
     CSS = """
@@ -115,7 +116,7 @@ class DataApp(App):
     def on_mount(self) -> None:
         self.set_focus(self.__main_table__())
         file_tree = self.__files_tree__()
-        base_info = Explorer(self.spark, self.base_path).base_info()
+        base_info = self.explorer.file_info(self.base_path)
         file_tree.root.set_label(f"{base_info["name"]} (dir)")
         file_tree.root.data = base_info
 
@@ -179,13 +180,11 @@ class DataApp(App):
             self.notify(f"File (not directory) is selected {current_file.data}")
             return
 
-        path = current_file.data["full_path"]
-        explorer = Explorer(self.spark, path)
-        explorer.refresh_directory()
-
         self.notify(f"Refreshing {current_file.data["name"]} {current_file.data}")
+        path = current_file.data["full_path"]
+        dir_contents = self.explorer.read_directory(path)
         current_file.remove_children()
-        for f in explorer.current_dir_content:
+        for f in dir_contents:
             if f["is_dir"]:
                 current_file.add(label=f"{f["name"]} (dir)", data=f)
             else:
