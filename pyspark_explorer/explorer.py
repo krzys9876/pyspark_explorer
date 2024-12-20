@@ -33,13 +33,13 @@ class Explorer:
 
 
     def __file_info__(self, path) -> {}:
-        file_info = self.fs.getContentSummary(path)
+        file_status = self.fs.getFileStatus(path)
         file_name = path.getName()
-        is_file = file_info.getDirectoryCount()==0 and file_info.getFileCount()==1
+        is_file = file_status.isFile()
         file = {"name": file_name, "full_path": path.toString(), "is_dir": not is_file,
-                "getDirectoryCount": file_info.getDirectoryCount(), "getFileCount": file_info.getFileCount(),
                 "size": 0, "hr_size": "", "type": ""}
         if is_file:
+            file_info = self.fs.getContentSummary(path)
             file["size"] = file_info.getLength()
             file["hr_size"] = __human_readable_size__(file_info.getLength())
             file["type"] = "CSV" if file_name.lower().endswith(".csv") \
