@@ -3,7 +3,6 @@ import sys
 from pyspark.sql import SparkSession
 
 import pyspark_explorer.ui as ui
-from pyspark_explorer.data_table import DataFrameTable
 from pyspark_explorer.explorer import Explorer
 
 
