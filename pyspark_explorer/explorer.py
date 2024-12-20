@@ -2,6 +2,8 @@ import math
 
 from pyspark.sql import SparkSession
 
+from pyspark_explorer.data_table import DataFrameTable
+
 
 def __ensure_path_separator__(path: str) -> str:
     res = path.strip()
@@ -66,3 +68,9 @@ class Explorer:
 
     def file_info(self, path: str) -> {}:
         return self.__file_info__(self.spark._jvm.org.apache.hadoop.fs.Path(path))
+
+
+    def read_file(self, file_format: str, path: str) -> DataFrameTable:
+        df = self.spark.read.format(file_format).load(path)
+        tab = DataFrameTable(df.schema.fields, df.take(DataFrameTable.TAKE_ROWS), True)
+        return tab

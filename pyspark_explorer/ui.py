@@ -1,4 +1,3 @@
-from pyspark.sql.session import SparkSession
 from textual import on
 from textual.app import App, ComposeResult
 from textual.binding import Binding
@@ -12,13 +11,12 @@ from pyspark_explorer.explorer import Explorer
 
 class DataApp(App):
 
-    def __init__(self, data: DataFrameTable, spark: SparkSession, base_path: str, **kwargs):
+    def __init__(self, explorer: Explorer, base_path: str, **kwargs):
         super(DataApp, self).__init__(**kwargs)
-        self.orig_tab: DataFrameTable = data
+        self.orig_tab: DataFrameTable = DataFrameTable([],[])
         self.tab = self.orig_tab
         self.base_path = base_path
-        self.spark=spark
-        self.explorer = Explorer(spark)
+        self.explorer = explorer
 
 
     CSS = """
@@ -64,7 +62,9 @@ class DataApp(App):
         Binding(key="r", action="reload_table", description="Reload current file"),
         Binding(key="u", action="refresh_table", description="Refresh table", show=False),
         Binding(key="d", action="refresh_current_directory", description="Refresh directory"),
+        Binding(key="f", action="read_file", description="Read file sample"),
     ]
+
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -119,6 +119,7 @@ class DataApp(App):
         base_info = self.explorer.file_info(self.base_path)
         file_tree.root.set_label(f"{base_info["name"]} (dir)")
         file_tree.root.data = base_info
+        self.action_reload_table()
 
 
     def on_radio_set_changed(self, event: RadioSet.Changed) -> None:
@@ -191,6 +192,20 @@ class DataApp(App):
                 current_file.add_leaf(label=f"{f["name"]} {f["hr_size"]}", data=f)
 
         current_file.expand()
+
+
+    def action_read_file(self) -> None:
+        current_file = self.__files_tree__().cursor_node
+        if current_file is None:
+            self.notify(f"No file/directory selected")
+            return
+
+        path = current_file.data["full_path"]
+        self.notify(f"Reading file: {path}")
+
+        tab = self.explorer.read_file("json", path)
+        self.orig_tab = tab
+        self.action_reload_table()
 
 
     def __selected_cell_info__(self) -> (int, int, {}):
