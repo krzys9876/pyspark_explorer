@@ -27,7 +27,8 @@ class Explorer:
         self.fs = spark._jvm.org.apache.hadoop.fs.FileSystem.get(spark._jsc.hadoopConfiguration())
         self.params = {
             "auto_refresh": True,
-            "file_limit": 5,
+            "file_limit": 1000,
+            "take_rows": 100,
             "sort_file_desc": True
         }
 
@@ -72,5 +73,5 @@ class Explorer:
 
     def read_file(self, file_format: str, path: str) -> DataFrameTable:
         df = self.spark.read.format(file_format).load(path)
-        tab = DataFrameTable(df.schema.fields, df.take(DataFrameTable.TAKE_ROWS), True)
+        tab = DataFrameTable(df.schema.fields, df.take(self.params["file_limit"]), True)
         return tab

@@ -6,7 +6,6 @@ import copy
 
 class DataFrameTable:
     TEXT_LEN = 50
-    TAKE_ROWS = 100
 
     # allow original rows (Row type) or previously transformed rows (when drilling to details)
     def __init__(self, schema: [StructField], data=None, transformed_data=None, expand_structs: bool = False):
