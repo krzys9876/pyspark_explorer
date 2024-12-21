@@ -13,7 +13,7 @@ def __ensure_path_separator__(path: str) -> str:
 def __human_readable_size__(size: int) -> str:
     formats = [".0f", ".1f", ".3f", ".3f", ".3f"]
     units = ["B", "k", "M", "G", "T"]
-    exp = math.log(size,10)
+    exp = math.log(size,10) if size>0 else 0
     ref_exp = math.log(10.24,10)
     #  -2 to scale properly and avoid too early rounding
     scale = max(0, min(round((exp / ref_exp - 2) / 3), 4))
