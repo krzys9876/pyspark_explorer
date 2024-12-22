@@ -67,8 +67,17 @@ class DataApp(App):
             background: $boost;
             height: 100%;
         }
-        #main_table {
+        #main_table_container {
             column-span: 2;
+            layout: grid;
+            grid-size: 1 2;
+            grid-rows: 1fr 1;
+        }
+        #main_table {
+        }
+        #main_table_status {
+            width: 100%;
+            background: $secondary;
         }
         #bottom_left_status {
             background: $boost;
@@ -113,7 +122,10 @@ class DataApp(App):
                 # Structure tab
                 yield Tree("",id="struct_tree")
 
-        yield DataTable(id="main_table")
+        with Vertical(id="main_table_container"):
+            yield DataTable(id="main_table")
+            yield Static("", id="main_table_status")
+
         yield Static("", id="bottom_left_status")
         yield Static("", id="bottom_mid_status")
         yield Static("", id="bottom_right_status")
@@ -122,6 +134,9 @@ class DataApp(App):
 
     def __main_table__(self) -> DataTable:
         return self.get_widget_by_id(id="main_table", expect_type=DataTable)
+
+    def __main_table_status__(self) -> Static:
+        return self.get_widget_by_id(id="main_table_status", expect_type=Static)
 
     def __top_status__(self) -> Static:
         return self.get_widget_by_id(id="top_status", expect_type=Static)
@@ -221,7 +236,7 @@ class DataApp(App):
             self.notify(f"File (not directory) is selected {current_file.data}")
             return
 
-        self.notify(f"Refreshing {current_file.data["name"]} {current_file.data}")
+        self.notify(f"Refreshing {current_file.data["name"]}") # {current_file.data}")
         path = current_file.data["full_path"]
         dir_contents = self.explorer.read_directory(path)
         current_file.remove_children()
@@ -268,17 +283,21 @@ class DataApp(App):
     def cell_highlighted(self, event: DataTable.CellHighlighted):
         x, y, column, cell = self.__selected_cell_info__()
         pos_txt = f"{x+1}/{y+1}"
-        top_status = self.__top_status__()
-        top_status.update(pos_txt)
+        #top_status = self.__top_status__()
+        #top_status.update(pos_txt)
         cell_dv = cell["display_value"]
         dv_status = self.__bottom_mid_status__()
         dv_status.update(cell_dv)
-        type_status = self.__bottom_left_status__()
-        status_text = f"{column["name"]}\n  {column["type"]}/{column["field_type"].typeName()}\n  {column["kind"]}"
+        #type_status = self.__bottom_left_status__()
+        #status_text = f"{column["name"]}\n  {column["type"]}/{column["field_type"].typeName()}\n  {column["kind"]}"
+        status_text_flat = f"{column["name"]} | {column["type"]}/{column["field_type"].typeName()} | {column["kind"]}"
         if column["type"]=="ArrayType":
-            status_text = f"{status_text}\n  {len(cell["value"])} inner row(s)"
+        #    status_text = f"{status_text}\n  {len(cell["value"])} inner row(s)"
+            status_text_flat = f"{status_text_flat} | {len(cell["value"])} inner row(s)"
 
-        type_status.update(status_text)
+        #type_status.update(status_text)
+        main_table_status = self.__main_table_status__()
+        main_table_status.update(f"{pos_txt} | {status_text_flat}")
 
 
     @on(DataTable.CellSelected, "#main_table")
@@ -292,6 +311,20 @@ class DataApp(App):
             self.tab = embedded_tab
             self.load_data()
 
+
+    @on(Tree.NodeHighlighted, "#file_tree")
+    def file_selected(self, event: Tree.NodeHighlighted):
+        data = event.node.data
+        type_status = self.__bottom_left_status__()
+        if data is None:
+            type_status.update("")
+            return
+
+        if data["is_dir"]:
+            status_text = f"{data["name"]}"
+        else:
+            status_text = f"{data["name"]}\n{data["type"]} {data["hr_size"]} ({data["size"]})"
+        type_status.update(status_text)
 
 # if __name__ == "__main__":
 #     app = DataApp()
