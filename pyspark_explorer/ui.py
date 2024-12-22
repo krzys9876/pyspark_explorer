@@ -147,7 +147,8 @@ class DataApp(App):
         self.set_focus(self.__main_table__())
         file_tree = self.__files_tree__()
         base_info = self.explorer.file_info(self.base_path)
-        file_tree.root.set_label(f"{base_info["name"]} (dir)")
+        root_label =  f"{"\uea83" if base_info["is_dir"] else "\uea7b"} {base_info["name"]}"
+        file_tree.root.set_label(root_label)
         file_tree.root.data = base_info
         self.action_reload_table()
 
@@ -201,6 +202,14 @@ class DataApp(App):
         self.set_focus(self.__struct_tree__())
         self.set_focus(self.__main_table__())
 
+    @staticmethod
+    def __file_label__(info: {}) -> str:
+        if info["is_dir"]:
+            label = f"\uea83 {info["name"]}"
+        else:
+            label = f"\uf15c {info["name"]} {info["hr_size"]}"
+        return label
+
 
     def action_refresh_current_directory(self) -> None:
         current_file = self.__files_tree__().cursor_node
@@ -217,10 +226,8 @@ class DataApp(App):
         dir_contents = self.explorer.read_directory(path)
         current_file.remove_children()
         for f in dir_contents:
-            if f["is_dir"]:
-                current_file.add(label=f"{f["name"]} (dir)", data=f)
-            else:
-                current_file.add_leaf(label=f"{f["name"]} {f["hr_size"]}", data=f)
+            label = self.__file_label__(f)
+            current_file.add(label=label, data=f)
 
         current_file.expand()
 
