@@ -1,12 +1,40 @@
-from textual import on
+import asyncio
+
+from textual import on, work
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Vertical
-from textual.widgets import DataTable, Header, Footer, Static, Input, Tree, TabbedContent, RadioSet, RadioButton
+from textual.screen import Screen
+from textual.widgets import DataTable, Header, Footer, Static, Input, Tree, TabbedContent, RadioSet, RadioButton, \
+    LoadingIndicator, Label
 from textual.widgets._tree import TreeNode
 
 from pyspark_explorer.data_table import DataFrameTable, extract_embedded_table
 from pyspark_explorer.explorer import Explorer
+
+
+class BusyScreen(Screen):
+    CSS = """
+    BusyScreen {
+        align: center middle;
+        background: rgba(0,0,0,0.5);
+    }
+    #dialog {
+        background: $secondary;
+        height: 20;
+        width: 30;
+        align: center middle;
+    }
+    #label {
+        align: center middle;
+    }    
+    """
+
+    def compose(self) -> ComposeResult:
+
+        with Vertical(id = "dialog"):
+            yield Static(content=" Waiting for spark session... ", id="label")
+
 
 
 class DataApp(App):
@@ -67,6 +95,7 @@ class DataApp(App):
 
 
     def compose(self) -> ComposeResult:
+        yield LoadingIndicator()
         yield Header()
         with Vertical(id="top_status_container"):
             yield Static("", id="top_status")
@@ -114,6 +143,7 @@ class DataApp(App):
 
 
     def on_mount(self) -> None:
+        self.query_one(LoadingIndicator).display = True
         self.set_focus(self.__main_table__())
         file_tree = self.__files_tree__()
         base_info = self.explorer.file_info(self.base_path)
@@ -157,12 +187,13 @@ class DataApp(App):
         for f in self.tab.schema_tree:
             self.__add_subfields_to_tree(f, tree.root)
 
-
-    def action_reload_table(self) -> None:
+    @work
+    async def action_reload_table(self) -> None:
         self.notify("refreshing...")
         self.tab = self.orig_tab
         self.load_data()
         self.load_structure()
+        self.query_one(LoadingIndicator).display = False
 
 
     def action_refresh_table(self) -> None:
@@ -195,6 +226,12 @@ class DataApp(App):
 
 
     def action_read_file(self) -> None:
+        self.query_one(LoadingIndicator).display = True
+        self.read_file()
+
+
+    @work
+    async def read_file(self) -> None:
         current_file = self.__files_tree__().cursor_node
         if current_file is None:
             self.notify(f"No file/directory selected")
@@ -203,7 +240,11 @@ class DataApp(App):
         path = current_file.data["full_path"]
         self.notify(f"Reading file: {path}")
 
+        await self.push_screen(BusyScreen())
+        await asyncio.sleep(1)
+        self.refresh()
         tab = self.explorer.read_file("json", path)
+        await self.pop_screen()
         self.orig_tab = tab
         self.action_reload_table()
 
@@ -231,6 +272,7 @@ class DataApp(App):
             status_text = f"{status_text}\n  {len(cell["value"])} inner row(s)"
 
         type_status.update(status_text)
+
 
     @on(DataTable.CellSelected, "#main_table")
     def cell_selected(self, event: DataTable.CellSelected):
