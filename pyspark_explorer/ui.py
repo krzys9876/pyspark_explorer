@@ -45,6 +45,7 @@ class DataApp(App):
         self.tab = self.orig_tab
         self.base_path = base_path
         self.explorer = explorer
+        self.file_type = "JSON"
 
 
     CSS = """
@@ -156,21 +157,39 @@ class DataApp(App):
     def __bottom_mid_status__(self) -> Static:
         return self.get_widget_by_id(id="bottom_mid_status", expect_type=Static)
 
+    def __file_type_radio__(self) -> RadioSet:
+        return self.get_widget_by_id(id="file_type", expect_type=RadioSet)
+
 
     def on_mount(self) -> None:
         self.query_one(LoadingIndicator).display = True
         self.set_focus(self.__main_table__())
         file_tree = self.__files_tree__()
         base_info = self.explorer.file_info(self.base_path)
-        root_label =  f"{"\uea83" if base_info["is_dir"] else "\uea7b"} {base_info["name"]}"
+        root_label =  self.__file_label__(base_info)
         file_tree.root.set_label(root_label)
         file_tree.root.data = base_info
         self.action_reload_table()
 
 
+    @staticmethod
+    def __file_type__(index: int) -> str:
+        match index:
+            case 0: type = "PARQUET"
+            case 1: type = "JSON"
+            case 2: type = "CSV"
+            case _: type = "UNKNOWN"
+        return type
+
+
+    def __get_file_type__(self) -> str:
+        return self.__file_type__(self.__file_type_radio__().pressed_index)
+
+
     def on_radio_set_changed(self, event: RadioSet.Changed) -> None:
         if event.radio_set.id=="file_type":
-            self.notify(f"{event.index}")
+            self.file_type = self.__get_file_type__()
+            self.notify(f"{self.file_type} selected")
 
 
     def load_data(self) -> None:
@@ -186,9 +205,9 @@ class DataApp(App):
     @staticmethod
     def __add_subfields_to_tree(field_info: {}, node: TreeNode):
         if field_info["kind"] == "simple":
-            node.add_leaf(f"{field_info["name"]} ({field_info["type"]})", data=field_info)
+            node.add_leaf(f"{field_info['name']} ({field_info['type']})", data=field_info)
         else:
-            added = node.add(f"{field_info["name"]} ({field_info["type"]})", data=field_info)
+            added = node.add(f"{field_info['name']} ({field_info['type']})", data=field_info)
             for subfield in field_info["subfields"]:
                 DataApp.__add_subfields_to_tree(subfield, added)
             added.expand()
@@ -217,12 +236,15 @@ class DataApp(App):
         self.set_focus(self.__struct_tree__())
         self.set_focus(self.__main_table__())
 
+
     @staticmethod
     def __file_label__(info: {}) -> str:
         if info["is_dir"]:
-            label = f"\uea83 {info["name"]}"
+            # label = f"\uea83 {info["name"]}"
+            label = f"{info['name']}"
         else:
-            label = f"\uf15c {info["name"]} {info["hr_size"]}"
+            # label = f"\uf15c {info["name"]} {info["hr_size"]}"
+            label = f"{info['name']} {info['hr_size']}"
         return label
 
 
@@ -236,7 +258,7 @@ class DataApp(App):
             self.notify(f"File (not directory) is selected {current_file.data}")
             return
 
-        self.notify(f"Refreshing {current_file.data["name"]}") # {current_file.data}")
+        self.notify(f"Refreshing {current_file.data['name']}") # {current_file.data}")
         path = current_file.data["full_path"]
         dir_contents = self.explorer.read_directory(path)
         current_file.remove_children()
@@ -265,7 +287,7 @@ class DataApp(App):
         await self.push_screen(BusyScreen())
         await asyncio.sleep(1)
         self.refresh()
-        tab = self.explorer.read_file("json", path)
+        tab = self.explorer.read_file(self.file_type, path)
         await self.pop_screen()
         self.orig_tab = tab
         self.action_reload_table()
@@ -290,10 +312,10 @@ class DataApp(App):
         dv_status.update(cell_dv)
         #type_status = self.__bottom_left_status__()
         #status_text = f"{column["name"]}\n  {column["type"]}/{column["field_type"].typeName()}\n  {column["kind"]}"
-        status_text_flat = f"{column["name"]} | {column["type"]}/{column["field_type"].typeName()} | {column["kind"]}"
+        status_text_flat = f"{column['name']} | {column['type']}/{column['field_type'].typeName()} | {column['kind']}"
         if column["type"]=="ArrayType":
         #    status_text = f"{status_text}\n  {len(cell["value"])} inner row(s)"
-            status_text_flat = f"{status_text_flat} | {len(cell["value"])} inner row(s)"
+            status_text_flat = f"{status_text_flat} | {len(cell['value'])} inner row(s)"
 
         #type_status.update(status_text)
         main_table_status = self.__main_table_status__()
@@ -321,9 +343,9 @@ class DataApp(App):
             return
 
         if data["is_dir"]:
-            status_text = f"{data["name"]}"
+            status_text = f"{data['name']} (dir)"
         else:
-            status_text = f"{data["name"]}\n{data["type"]} {data["hr_size"]} ({data["size"]})"
+            status_text = f"{data['name']}\n{data['type']} {data['hr_size']} ({data['size']})"
         type_status.update(status_text)
 
 # if __name__ == "__main__":
