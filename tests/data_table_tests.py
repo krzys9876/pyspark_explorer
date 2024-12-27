@@ -335,39 +335,21 @@ class TestDataTable:
         assert tab.column_names == ["id", "structs"]
 
         expected_rows = [
-            {"row_index": 0, "row": [
-                {"value": 1, "display_value": "1"},
-                {"value": [], "display_value": "[]"},
-            ]},
-            {"row_index": 1, "row": [
-                {"value": 2, "display_value": "2"},
-                {"value": [], "display_value": "[]"},
-            ]},
+            {"row_index": 0, "row": [{"value": 1, "display_value": "1"},{"value": [], "display_value": "[]"}]},
+            {"row_index": 1, "row": [{"value": 2, "display_value": "2"},{"value": [], "display_value": "[]"}]},
         ]
 
         assert tab.rows == expected_rows
-        assert tab.row_values == [
-            ["1","[]"],
-            ["2","[]"]]
+        assert tab.row_values == [["1","[]"],["2","[]"]]
 
         # now drill down to details and make sure the results are the same
-        # extracted_tab1 = extract_embedded_table(tab, 1, 0)
-        # assert extracted_tab1 is not None
-        # # this is the same as expected_cols[1] but with index 0
-        # assert extracted_tab1.columns == [{"col_index": 0, "name": "structs", "kind": "struct", "type": "StructType", "field_type": schema[1].dataType.elementType}]
-        # assert extracted_tab1.rows == inner_embedded_expected_rows1
-        # assert extracted_tab1.column_names == ["structs"]
-        # assert extracted_tab1.row_values == [
-        #     [DataFrameTable.disp_value(inner_rows1[0])[:DataFrameTable.TEXT_LEN]],
-        #     [DataFrameTable.disp_value(inner_rows1[1])[:DataFrameTable.TEXT_LEN]]]
-        #
-        # extracted_tab2 = extract_embedded_table(extracted_tab1, 0, 0)
-        # assert extracted_tab2 is not None
-        # assert extracted_tab2.columns == inner_expected_cols1
-        # assert extracted_tab2.rows == [inner_expected_rows1[0]]
-        # assert extracted_tab2.column_names == ["id", "text", "date"]
-        # # this is an input row but mapped to strings
-        # assert extracted_tab2.row_values == [['11', 'some text 1', '2024-02-01']]
+        extracted_tab1 = extract_embedded_table(tab, 1, 0)
+        assert extracted_tab1 is not None
+        # this is the same as expected_cols[1] but with index 0
+        assert extracted_tab1.columns == [{"col_index": 0, "name": "structs", "kind": "struct", "type": "StructType", "field_type": schema[1].dataType.elementType}]
+        assert extracted_tab1.rows == []
+        assert extracted_tab1.column_names == ["structs"]
+        assert extracted_tab1.row_values == []
 
 
     def test_struct_field_expansion(self) -> None:
