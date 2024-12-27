@@ -110,6 +110,22 @@ class TestDataTable:
         assert tab.row_values == [[str([1,2])],[str([3,4])]]
 
 
+    def test_empty_array_of_single_field(self) -> None:
+        # now test complex schema with embedded empty array of a simple field
+        schema = [StructField("nums", ArrayType(IntegerType()))]
+        rows = None
+        tab = DataFrameTable(schema, rows)
+
+        expected_cols = [
+            {"col_index": 0, "name": "nums", "kind": "array", "type": "ArrayType", "field_type": schema[0].dataType.elementType},
+        ]
+        assert tab.columns == expected_cols
+        assert tab.column_names == ["nums"]
+        expected_rows = []
+        assert tab.rows == expected_rows
+        assert tab.row_values == []
+
+
     def test_embedded_struct_field(self) -> None:
         # first test internal fields (struct fields)
         inner_row1, inner_expected_row1 = TestDataTable.__prepare_multiple_simple_fields_row__([11, "some text 1", "2024-02-01"], 0)
