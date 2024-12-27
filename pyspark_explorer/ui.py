@@ -6,7 +6,7 @@ from textual.binding import Binding
 from textual.containers import Vertical
 from textual.screen import Screen
 from textual.widgets import DataTable, Header, Footer, Static, Input, Tree, TabbedContent, RadioSet, RadioButton, \
-    LoadingIndicator, Label
+    LoadingIndicator
 from textual.widgets._tree import TreeNode
 
 from pyspark_explorer.data_table import DataFrameTable, extract_embedded_table
@@ -51,15 +51,11 @@ class DataApp(App):
     CSS = """
         Screen {
             layout: grid;
-            grid-size: 3;
-            grid-columns: 1fr 5fr 1fr;
+            grid-size: 2 3;
+            grid-columns: 1fr 5fr;
             grid-rows: 3 5fr 5;
         }
-        #top_status_container {
-            background: $secondary;
-            height: 100%;
-        }
-        #top_input {
+        #top_container {
             column-span: 2;
             background: $secondary;
             height: 100%;
@@ -69,7 +65,6 @@ class DataApp(App):
             height: 100%;
         }
         #main_table_container {
-            column-span: 2;
             layout: grid;
             grid-size: 1 2;
             grid-rows: 1fr 1;
@@ -81,7 +76,7 @@ class DataApp(App):
             background: $secondary;
         }
         #bottom_left_status {
-            background: $boost;
+            background: $secondary;
             height: 100%;
         }
         #bottom_mid_status {
@@ -89,7 +84,7 @@ class DataApp(App):
             height: 100%;
         }
         #bottom_right_status {
-            background: $boost;
+            background: $secondary;
             height: 100%;
         }
         """
@@ -105,11 +100,10 @@ class DataApp(App):
 
 
     def compose(self) -> ComposeResult:
-        yield LoadingIndicator()
+        #yield LoadingIndicator()
         yield Header()
-        with Vertical(id="top_status_container"):
+        with Vertical(id="top_container"):
             yield Static("", id="top_status")
-        yield Input(id="top_input")
         with Vertical(id="left_container"):
             with TabbedContent("Files", "Structure"):
                 # Files tab
@@ -129,7 +123,6 @@ class DataApp(App):
 
         yield Static("", id="bottom_left_status")
         yield Static("", id="bottom_mid_status")
-        yield Static("", id="bottom_right_status")
         yield Footer(show_command_palette=True)
 
 
@@ -148,9 +141,6 @@ class DataApp(App):
     def __files_tree__(self) -> Tree:
         return self.get_widget_by_id(id="file_tree", expect_type=Tree)
 
-    def __top_input__(self) -> Input:
-        return self.get_widget_by_id(id="top_input", expect_type=Input)
-
     def __bottom_left_status__(self) -> Static:
         return self.get_widget_by_id(id="bottom_left_status", expect_type=Static)
 
@@ -162,13 +152,14 @@ class DataApp(App):
 
 
     def on_mount(self) -> None:
-        self.query_one(LoadingIndicator).display = True
+        #self.query_one(LoadingIndicator).display = True
         self.set_focus(self.__main_table__())
         file_tree = self.__files_tree__()
         base_info = self.explorer.file_info(self.base_path)
         root_label =  self.__file_label__(base_info)
         file_tree.root.set_label(root_label)
         file_tree.root.data = base_info
+        self.__refresh_top_status__("")
         self.action_reload_table()
 
 
@@ -228,7 +219,7 @@ class DataApp(App):
         self.tab = self.orig_tab
         self.load_data()
         self.load_structure()
-        self.query_one(LoadingIndicator).display = False
+        #self.query_one(LoadingIndicator).display = False
 
 
     def action_refresh_table(self) -> None:
@@ -270,19 +261,20 @@ class DataApp(App):
 
 
     def action_read_file(self) -> None:
-        self.query_one(LoadingIndicator).display = True
-        self.read_file()
-
-
-    @work
-    async def read_file(self) -> None:
+        #self.query_one(LoadingIndicator).display = True
         current_file = self.__files_tree__().cursor_node
         if current_file is None:
             self.notify(f"No file/directory selected")
             return
 
-        path = current_file.data["full_path"]
+        self.read_file(current_file.data["full_path"])
+
+
+
+    @work
+    async def read_file(self, path: str) -> None:
         self.notify(f"Reading file: {path}")
+        self.__refresh_top_status__(path)
 
         await self.push_screen(BusyScreen())
         await asyncio.sleep(1)
@@ -291,6 +283,14 @@ class DataApp(App):
         await self.pop_screen()
         self.orig_tab = tab
         self.action_reload_table()
+
+
+    def __refresh_top_status__(self, path: str) -> None:
+        status = self.__top_status__()
+        path_fragment = path if len(path) < len(self.base_path) else f"{path[len(self.base_path)-1:]}"
+        status_txt = (f"Base path: {self.base_path} | Loaded file: {path_fragment}\n" +
+                      f"Rows: {self.explorer.params['take_rows']} | Files: {self.explorer.params['file_limit']}")
+        status.update(status_txt)
 
 
     def __selected_cell_info__(self) -> (int, int, {}):
@@ -305,19 +305,13 @@ class DataApp(App):
     def cell_highlighted(self, event: DataTable.CellHighlighted):
         x, y, column, cell = self.__selected_cell_info__()
         pos_txt = f"{x+1}/{y+1}"
-        #top_status = self.__top_status__()
-        #top_status.update(pos_txt)
         cell_dv = cell["display_value"]
         dv_status = self.__bottom_mid_status__()
         dv_status.update(cell_dv)
-        #type_status = self.__bottom_left_status__()
-        #status_text = f"{column["name"]}\n  {column["type"]}/{column["field_type"].typeName()}\n  {column["kind"]}"
         status_text_flat = f"{column['name']} | {column['type']}/{column['field_type'].typeName()} | {column['kind']}"
         if column["type"]=="ArrayType":
-        #    status_text = f"{status_text}\n  {len(cell["value"])} inner row(s)"
             status_text_flat = f"{status_text_flat} | {len(cell['value'])} inner row(s)"
 
-        #type_status.update(status_text)
         main_table_status = self.__main_table_status__()
         main_table_status.update(f"{pos_txt} | {status_text_flat}")
 
