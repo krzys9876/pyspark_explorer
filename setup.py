@@ -6,7 +6,7 @@ long_description = (here / "README.md").read_text(encoding="utf-8")
 
 setup(
     name="pyspark-explorer",  # Required
-    version="0.0.1",  # Required
+    version="0.0.2",  # Required
     description="Explore data files with pyspark",  # Optional
     long_description=long_description,  # Optional
     long_description_content_type="text/markdown",  # Optional (see note above)
@@ -26,6 +26,7 @@ setup(
     package_dir={"": "src"},  # Optional
     packages=find_packages(where="src"),  # Required
     python_requires=">=3.11, <4",
+    install_requires=["pyspark>=3.5.1, <4.0.0", "textual>=1.0.0"],  # Optional
     project_urls={  # Optional
         "Source": "https://github.com/krzys9876/pyspark_explorer",
     },
