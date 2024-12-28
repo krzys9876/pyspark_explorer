@@ -1,0 +1,30 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pyspark-explorer"
+version = "0.0.1"
+dependencies = [
+  "pyspark>=3.5.1",
+  "textual>=1.0.0"
+]
+requires-python = ">=3.11"
+authors = [
+  {name = "Krzysztof Ruta", email = "krzys9876@gmail.com"}
+]
+maintainers = [
+  {name = "Krzysztof Ruta", email = "krzys9876@gmail.com"}
+]
+description = "Explore data files with pyspark"
+readme = "README.md"
+license = {file = "LICENSE"}
+keywords = ["pyspark", "spark", "explorer", "data"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Programming Language :: Python"
+]
+
+[project.urls]
+Homepage = "https://github.com/krzys9876/pyspark_explorer"
+Repository = "https://github.com/krzys9876/pyspark_explorer"
