@@ -274,15 +274,20 @@ class DataApp(App):
     @work
     async def read_file(self, path: str) -> None:
         self.notify(f"Reading file: {path}")
-        self.__refresh_top_status__(path)
 
         await self.push_screen(BusyScreen())
         await asyncio.sleep(1)
         self.refresh()
         tab = self.explorer.read_file(self.file_type, path)
         await self.pop_screen()
-        self.orig_tab = tab
-        self.action_reload_table()
+
+        #TODO: improve this very simplistic approach to error handling
+        if tab is None:
+            self.notify(f"Error occured reading file: {path}")
+        else:
+            self.orig_tab = tab
+            self.__refresh_top_status__(path)
+            self.action_reload_table()
 
 
     def __refresh_top_status__(self, path: str) -> None:
