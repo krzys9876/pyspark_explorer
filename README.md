@@ -1,14 +1,14 @@
 # Spark File Explorer
 When developing spark applications I came across the growing number of data files that I create. 
 
-## CSV, JSON, PARQUET?
+## CSVs are fine but what about JSON and complex PARQUET files?
 
 To open and explore a file I used Excel to view CSV files, text editors with plugins to view JSON files, 
 but there was nothing handy to view PARQUETs. Event formatted JSONs were not always readable. What about viewing schemas? 
 
 Each time I had to use spark and write simple apps which was not a problem itself but was tedious and boring.
 
-## Database?
+## Why not a database?
 
 Well, for tabular data there problems is already solved - just use your preferred database.
 Quite often we can load text files or even parquets directly to the database. 
@@ -37,9 +37,29 @@ the remote cluster. Sounds perfect. All I needed was a console UI library, so I 
 
 ## Textual
 
-What a great project! Years ago I used [_courses_](https://docs.python.org/3/library/curses.html) but 
-[_textual_](https://textual.textualize.io/) is so superior to what I remember.
+What a great project [_textual_](https://textual.textualize.io/) is! 
+
+Years ago I used [_curses_](https://docs.python.org/3/library/curses.html) but 
+[_textual_](https://textual.textualize.io/) is so superior to what I used back then. It has so many features packed in
+a friendly form of simple to use components. Highly recommended.
 
 # Usage
 
-TBD
+Install package with pip:
+    
+    pip install pyspark-explorer
+
+Run:
+
+    pyspark-explorer
+
+I recommend that you provide a base path. For local files that could be for example:
+
+    # Linux
+    pyspark-explorer file:///home/myuser/datafiles/base_path
+    # Windows
+    pyspark-explorer file:///c:/datafiles/base_path
+    # Remote hdfs cluster
+    pyspark-explorer hdfs://somecluster/datafiles/base_path
+
+Default path is set to /, which represents local root filesystem and works fine even in Windows thanks to Spark logics.
