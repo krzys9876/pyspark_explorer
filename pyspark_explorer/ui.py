@@ -5,8 +5,7 @@ from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Vertical
 from textual.screen import Screen
-from textual.widgets import DataTable, Header, Footer, Static, Input, Tree, TabbedContent, RadioSet, RadioButton, \
-    LoadingIndicator
+from textual.widgets import DataTable, Header, Footer, Static, Tree, TabbedContent, Select
 from textual.widgets._tree import TreeNode
 
 from pyspark_explorer.data_table import DataFrameTable, extract_embedded_table
@@ -39,13 +38,15 @@ class BusyScreen(Screen):
 
 class DataApp(App):
 
+    FILE_TYPES = ["PARQUET", "JSON", "CSV"]
+
     def __init__(self, explorer: Explorer, base_path: str, **kwargs):
         super(DataApp, self).__init__(**kwargs)
         self.orig_tab: DataFrameTable = DataFrameTable([],[])
         self.tab = self.orig_tab
         self.base_path = base_path
         self.explorer = explorer
-        self.file_type = "JSON"
+        self.file_type = self.FILE_TYPES[0]
 
 
     CSS = """
@@ -108,10 +109,7 @@ class DataApp(App):
             with TabbedContent("Files", "Structure"):
                 # Files tab
                 with Vertical(id="files_container"):
-                    with RadioSet(id="file_type"):
-                        yield RadioButton("PARQUET")
-                        yield RadioButton("JSON", value=True)
-                        yield RadioButton("CSV")
+                    yield Select.from_values(self.FILE_TYPES, allow_blank=False, value=self.file_type, id="file_type_select")
                     yield Tree("",id="file_tree")
 
                 # Structure tab
@@ -147,9 +145,6 @@ class DataApp(App):
     def __bottom_mid_status__(self) -> Static:
         return self.get_widget_by_id(id="bottom_mid_status", expect_type=Static)
 
-    def __file_type_radio__(self) -> RadioSet:
-        return self.get_widget_by_id(id="file_type", expect_type=RadioSet)
-
 
     def on_mount(self) -> None:
         #self.query_one(LoadingIndicator).display = True
@@ -163,23 +158,10 @@ class DataApp(App):
         self.action_reload_table()
 
 
-    @staticmethod
-    def __file_type__(index: int) -> str:
-        match index:
-            case 0: type = "PARQUET"
-            case 1: type = "JSON"
-            case 2: type = "CSV"
-            case _: type = "UNKNOWN"
-        return type
-
-
-    def __get_file_type__(self) -> str:
-        return self.__file_type__(self.__file_type_radio__().pressed_index)
-
-
-    def on_radio_set_changed(self, event: RadioSet.Changed) -> None:
-        if event.radio_set.id=="file_type":
-            self.file_type = self.__get_file_type__()
+    @on(Select.Changed)
+    def select_changed(self, event: Select.Changed) -> None:
+        if event.select.id=="file_type_select":
+            self.file_type = str(event.value)
             self.notify(f"{self.file_type} selected")
 
 
@@ -249,6 +231,7 @@ class DataApp(App):
             self.notify(f"File (not directory) is selected {current_file.data}")
             return
 
+        self.set_focus(self.__files_tree__())
         self.notify(f"Refreshing {current_file.data['name']}") # {current_file.data}")
         path = current_file.data["full_path"]
         dir_contents = self.explorer.read_directory(path)
