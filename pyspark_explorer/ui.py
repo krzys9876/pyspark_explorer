@@ -250,18 +250,27 @@ class DataApp(App):
             self.notify(f"No file/directory selected")
             return
 
-        self.read_file(current_file.data["full_path"])
+        if not current_file.data["is_dir"] and current_file.data["size"]==0:
+            self.notify(f"Cannot read file of zero length")
+            return
+
+        if not current_file.data["is_dir"] and current_file.data["type"] in self.FILE_TYPES:
+            file_type = current_file.data["type"]
+        else:
+            file_type = self.file_type
+
+        self.read_file(current_file.data["full_path"], file_type)
 
 
 
     @work
-    async def read_file(self, path: str) -> None:
-        self.notify(f"Reading file: {path}")
+    async def read_file(self, path: str, file_type: str) -> None:
+        self.notify(f"Reading file as {file_type}\n{path}")
 
         await self.push_screen(BusyScreen())
         await asyncio.sleep(1)
         self.refresh()
-        tab = self.explorer.read_file(self.file_type, path)
+        tab = self.explorer.read_file(file_type, path)
         await self.pop_screen()
 
         #TODO: improve this very simplistic approach to error handling
