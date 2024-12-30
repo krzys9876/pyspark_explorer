@@ -29,7 +29,7 @@ class Explorer:
             "auto_refresh": True,
             "file_limit": 300,
             "take_rows": 1000,
-            "sort_file_desc": True
+            "sort_file_desc": False
         }
 
 
