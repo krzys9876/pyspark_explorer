@@ -330,6 +330,3 @@ class DataApp(App):
             status_text = f"{data['name']}\n{data['type']} {data['hr_size']} ({data['size']})"
         type_status.update(status_text)
 
-# if __name__ == "__main__":
-#     app = DataApp()
-#     app.run()
