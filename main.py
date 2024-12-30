@@ -9,8 +9,6 @@ from pyspark_explorer.explorer import Explorer
 def main() -> None:
     spark = (SparkSession.builder
              .master("local[2]")
-             # redirect all logs to file
-             #.config("spark.driver.extraJavaOptions", "-Dlog4j.configuration=file:log4j.properties")
              #.config("spark.driver.extraJavaOptions", "-Dlog4j.shutdownHookEnabled=false")
              .config("spark.log.level", "FATAL")
              .appName("pyspark_explorer")
