@@ -30,7 +30,7 @@ to display directories, files and their contents.
 ## Why console?
 
 I use Kubernetes in production environment, I develop Spark applications locally or in VM. 
-In all environments I would and I would like to have _one tool to rule them all_.  
+In all environments I would like to have _one tool to rule them all_.  
 
 I like console tools a lot, they require some sort of simplicity. They can run locally or over SSH connection on 
 the remote cluster. Sounds perfect. All I needed was a console UI library, so I wouldn't have to reinvent the wheel.
