@@ -6,7 +6,7 @@ long_description = (here / "README.md").read_text(encoding="utf-8")
 
 setup(
     name="pyspark-explorer",  # Required
-    version="0.0.2",  # Required
+    version="0.0.3",  # Required
     description="Explore data files with pyspark",  # Optional
     long_description=long_description,  # Optional
     long_description_content_type="text/markdown",  # Optional (see note above)
