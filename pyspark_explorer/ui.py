@@ -40,11 +40,10 @@ class DataApp(App):
 
     FILE_TYPES = ["PARQUET", "JSON", "CSV"]
 
-    def __init__(self, explorer: Explorer, base_path: str, **kwargs):
+    def __init__(self, explorer: Explorer, **kwargs):
         super(DataApp, self).__init__(**kwargs)
         self.orig_tab: DataFrameTable = DataFrameTable([],[])
         self.tab = self.orig_tab
-        self.base_path = base_path
         self.explorer = explorer
         self.file_type = self.FILE_TYPES[0]
 
@@ -150,7 +149,7 @@ class DataApp(App):
         #self.query_one(LoadingIndicator).display = True
         self.set_focus(self.__main_table__())
         file_tree = self.__files_tree__()
-        base_info = self.explorer.file_info(self.base_path)
+        base_info = self.explorer.file_info(self.explorer.get_base_path())
         root_label =  self.__file_label__(base_info)
         file_tree.root.set_label(root_label)
         file_tree.root.data = base_info
@@ -284,9 +283,9 @@ class DataApp(App):
 
     def __refresh_top_status__(self, path: str) -> None:
         status = self.__top_status__()
-        path_fragment = path if len(path) < len(self.base_path) else f"{path[len(self.base_path)-1:]}"
-        status_txt = (f"Base path: {self.base_path} | Loaded file: {path_fragment}\n" +
-                      f"Rows: {self.explorer.params['take_rows']} | Files: {self.explorer.params['file_limit']}")
+        path_fragment = path if len(path) < len(self.explorer.get_base_path()) else f"{path[len(self.explorer.get_base_path())-1:]}"
+        status_txt = (f"Base path: {self.explorer.get_base_path()} | Loaded file: {path_fragment}\n" +
+                      f"Rows: {self.explorer.get_take_rows()} | Files: {self.explorer.get_file_limit()}")
         status.update(status_txt)
 
 

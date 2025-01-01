@@ -22,15 +22,28 @@ def __human_readable_size__(size: int) -> str:
 
 
 class Explorer:
-    def __init__(self, spark: SparkSession) -> None:
+    def __init__(self, spark: SparkSession, base_path: str) -> None:
         self.spark = spark
         self.fs = spark._jvm.org.apache.hadoop.fs.FileSystem.get(spark._jsc.hadoopConfiguration())
         self.params = {
+            "base_path": base_path,
             "auto_refresh": True,
             "file_limit": 300,
             "take_rows": 1000,
             "sort_file_desc": False
         }
+
+
+    def get_base_path(self) -> str:
+        return self.params["base_path"]
+
+
+    def get_take_rows(self) -> int:
+        return self.params["take_rows"]
+
+
+    def get_file_limit(self) -> int:
+        return self.params["file_limit"]
 
 
     def __file_info__(self, path) -> {}:

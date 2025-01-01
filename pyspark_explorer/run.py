@@ -20,8 +20,8 @@ def run() -> None:
              .appName("pyspark_explorer")
              .getOrCreate())
 
-    explorer = Explorer(spark)
-    app = ui.DataApp(explorer, sys.argv[1] if len(sys.argv)>1 else "/")
+    explorer = Explorer(spark, sys.argv[1] if len(sys.argv)>1 else "/")
+    app = ui.DataApp(explorer)
     app.run()
 
     spark.stop()
