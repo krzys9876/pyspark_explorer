@@ -57,13 +57,20 @@ BusyScreen {
 }
 
 OptionsScreen {
+    align: center middle;
     background: rgba(0,0,0,0.5);
+}
+#options_header {
+    text-align: center;
+    background: $boost;
+    width: 100%;
+    height: 1;
 }
 #options_container {
     background: $secondary;
-    align: center middle;
+    align: center top;
     width: 70;
-    height: 25;
+    height: 19;
 }
 #options_buttons_container {
     background: $secondary;

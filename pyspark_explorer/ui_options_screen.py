@@ -42,6 +42,7 @@ class OptionsScreen(ModalScreen[dict]):
 
     def compose(self) -> ComposeResult:
         with VerticalScroll(id = "options_container"):
+            yield Label("Options", id="options_header")
             for key, value in self.init_options.items():
                 yield OneOption(key, str(value))
 
