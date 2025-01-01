@@ -3,13 +3,86 @@ import asyncio
 from textual import on, work
 from textual.app import App, ComposeResult
 from textual.binding import Binding
-from textual.containers import Vertical
-from textual.widgets import DataTable, Header, Footer, Static, Tree, TabbedContent, Select
+from textual.containers import Vertical, Horizontal, Container, VerticalScroll
+from textual.screen import ModalScreen
+from textual.widget import Widget
+from textual.widgets import DataTable, Header, Footer, Static, Tree, TabbedContent, Select, Button, TextArea, Input, \
+    Label
 from textual.widgets._tree import TreeNode
 
 from pyspark_explorer.data_table import DataFrameTable, extract_embedded_table
 from pyspark_explorer.explorer import Explorer
 from pyspark_explorer.ui_busy_screen import BusyScreen
+
+class OneOption(Widget):
+    """An input with a label."""
+
+    DEFAULT_CSS = """
+    OneOption {
+        layout: horizontal;
+        height: auto;
+    }
+    OneOption Label {
+        padding: 1;
+        width: 12;
+        text-align: right;
+    }
+    OneOption Input {
+        width: 1fr;
+    }
+    """
+
+    def __init__(self, input_label: str, input_value: str) -> None:
+        self.input_label = input_label
+        self.input_value = input_value
+        super().__init__()
+
+    def compose(self) -> ComposeResult:
+        yield Label(self.input_label)
+        yield Input(value=self.input_value)
+
+
+class OptionsScreen(ModalScreen[bool]):
+    def compose(self) -> ComposeResult:
+
+        with VerticalScroll(id = "options_container"):
+            yield OneOption("option1", "value1")
+            yield OneOption("option2", "value2")
+            yield OneOption("option3", "value3")
+            yield OneOption("option4", "value4")
+            yield OneOption("option5", "value5")
+            yield OneOption("option6", "value6")
+            yield OneOption("option7", "value7")
+            yield OneOption("option8", "value8")
+
+            # with Horizontal(id = "option1_container"):
+            #     with Vertical():
+            #         yield Static(content="option1")
+            #     with Vertical():
+            #         yield Input(value="value1", disabled=False, id="option1_value")
+            # with Horizontal(id = "option2_container"):
+            #     yield Static(content="option2")
+            #     yield Input(value="value2", disabled=False, id="option2_value")
+            # # with Horizontal(id = "option3_container"):
+            #     yield Static(content="option3")
+            #     yield Input(value="value3", disabled=False, id="option3_value")
+            # with Horizontal(id = "option4_container"):
+            #     yield Static(content="option4")
+            #     yield Input(value="value4", disabled=False, id="option4_value")
+
+            with Horizontal(id = "options_buttons_container"):
+                yield Button("Yes", id="yes", variant="success")
+                yield Button("No", id="no")
+
+
+    @on(Button.Pressed, "#yes")
+    def handle_yes(self) -> None:
+        self.dismiss(True)
+
+
+    @on(Button.Pressed, "#no")
+    def handle_no(self) -> None:
+        self.dismiss(False)
 
 
 class DataApp(App):
@@ -25,6 +98,7 @@ class DataApp(App):
         Binding(key="u", action="refresh_table", description="Refresh table", show=False),
         Binding(key="d", action="refresh_current_directory", description="Refresh directory"),
         Binding(key="f", action="read_file", description="Read file sample"),
+        Binding(key="o", action="change_options", description="Options"),
     ]
 
 
@@ -37,27 +111,27 @@ class DataApp(App):
 
 
     def compose(self) -> ComposeResult:
-        #yield LoadingIndicator()
-        yield Header()
-        with Vertical(id="top_container"):
-            yield Static("", id="top_status")
-        with Vertical(id="left_container"):
-            with TabbedContent("Files", "Structure"):
-                # Files tab
-                with Vertical(id="files_container"):
-                    yield Select.from_values(self.FILE_TYPES, allow_blank=False, value=self.file_type, id="file_type_select")
-                    yield Tree("",id="file_tree")
+        with Static(content="", id="main_container"):
+            yield Header()
+            with Vertical(id="top_container"):
+                yield Static("", id="top_status")
+            with Vertical(id="left_container"):
+                with TabbedContent("Files", "Structure"):
+                    # Files tab
+                    with Vertical(id="files_container"):
+                        yield Select.from_values(self.FILE_TYPES, allow_blank=False, value=self.file_type, id="file_type_select")
+                        yield Tree("",id="file_tree")
 
-                # Structure tab
-                yield Tree("",id="struct_tree")
+                    # Structure tab
+                    yield Tree("",id="struct_tree")
 
-        with Vertical(id="main_table_container"):
-            yield DataTable(id="main_table")
-            yield Static("", id="main_table_status")
+            with Vertical(id="main_table_container"):
+                yield DataTable(id="main_table")
+                yield Static("", id="main_table_status")
 
-        yield Static("", id="bottom_left_status")
-        yield Static("", id="bottom_mid_status")
-        yield Footer(show_command_palette=True)
+            yield Static("", id="bottom_left_status")
+            yield Static("", id="bottom_mid_status")
+            yield Footer(show_command_palette=True)
 
 
     def __main_table__(self) -> DataTable:
@@ -216,6 +290,11 @@ class DataApp(App):
             self.orig_tab = tab
             self.__refresh_top_status__(path)
             self.action_reload_table()
+
+    @work
+    async def action_change_options(self) -> None:
+        res = await self.push_screen_wait(OptionsScreen())
+        self.notify(f"Options: {res}")
 
 
     def __refresh_top_status__(self, path: str) -> None:

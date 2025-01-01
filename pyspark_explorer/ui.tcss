@@ -1,8 +1,13 @@
 Screen {
+    align: center middle;
+}
+#main_container {
     layout: grid;
     grid-size: 2 3;
     grid-columns: 1fr 5fr;
-    grid-rows: 3 5fr 5;
+    grid-rows: 4 5fr 5;
+    width: 100%;
+    height: 100%;
 }
 #top_container {
     column-span: 2;
@@ -35,4 +40,33 @@ Screen {
 #bottom_right_status {
     background: $secondary;
     height: 100%;
+}
+
+BusyScreen {
+    align: center middle;
+    background: rgba(0,0,0,0.5);
+}
+#busy_dialog {
+    background: $secondary;
+    height: 7;
+    width: 30;
+    align: center middle;
+}
+#busy_label {
+    align: center middle;
+}
+
+OptionsScreen {
+    background: rgba(0,0,0,0.5);
+}
+#options_container {
+    background: $secondary;
+    align: center middle;
+    width: 60;
+    height: 30;
+}
+#options_buttons_container {
+    background: $secondary;
+    align: center bottom;
+    height: 3
 }
