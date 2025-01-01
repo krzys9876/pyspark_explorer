@@ -4,7 +4,7 @@ from textual import on, work
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Vertical
-from textual.widgets import DataTable, Header, Footer, Static, Tree, TabbedContent, Select
+from textual.widgets import DataTable, Header, Footer, Static, Tree, TabbedContent, Select, TabPane
 from textual.widgets._tree import TreeNode
 
 from pyspark_explorer.data_table import DataFrameTable, extract_embedded_table
@@ -20,13 +20,13 @@ class DataApp(App):
     CSS_PATH = "ui.tcss"
 
     BINDINGS = [
-        Binding(key="^q", action="quit", description="Quit the app"),
         #Binding(key="question_mark", action="help", description="Show help screen", key_display="?"),
-        Binding(key="r", action="reload_table", description="Reload current file"),
-        Binding(key="u", action="refresh_table", description="Refresh table", show=False),
-        Binding(key="d", action="refresh_current_directory", description="Refresh directory"),
-        Binding(key="f", action="read_file", description="Read file sample"),
+        Binding(key="d", action="refresh_current_directory", description="Read directory"),
+        Binding(key="f", action="read_file", description="Read file"),
+        Binding(key="r", action="reload_table", description="Reset data view"),
+        Binding(key="u", action="refresh_table", description="Refresh view", show=False),
         Binding(key="o", action="change_options", description="Options"),
+        Binding(key="^q", action="Force quit", description="Quit the app"),
     ]
 
 
@@ -44,14 +44,15 @@ class DataApp(App):
             with Vertical(id="top_container"):
                 yield Static("", id="top_status")
             with Vertical(id="left_container"):
-                with TabbedContent("Files", "Structure"):
-                    # Files tab
-                    with Vertical(id="files_container"):
-                        yield Select.from_values(self.FILE_TYPES, allow_blank=False, value=self.file_type, id="file_type_select")
-                        yield Tree("",id="file_tree")
-
-                    # Structure tab
-                    yield Tree("",id="struct_tree")
+                with TabbedContent(id="tab_container"):
+                    with TabPane(id="files_pane", title="Files"):
+                        # Files tab
+                        with Vertical(id="files_container"):
+                            yield Select.from_values(self.FILE_TYPES, allow_blank=False, value=self.file_type, id="file_type_select")
+                            yield Tree("",id="file_tree")
+                    with TabPane(id="struct_pane", title="Structure"):
+                        # Structure tab
+                        yield Tree("",id="struct_tree")
 
             with Vertical(id="main_table_container"):
                 yield DataTable(id="main_table")
@@ -61,6 +62,9 @@ class DataApp(App):
             yield Static("", id="bottom_mid_status")
             yield Footer(show_command_palette=True)
 
+
+    def __tab_container__(self) -> TabbedContent:
+        return self.get_widget_by_id(id="tab_container", expect_type=TabbedContent)
 
     def __main_table__(self) -> DataTable:
         return self.get_widget_by_id(id="main_table", expect_type=DataTable)
@@ -86,13 +90,13 @@ class DataApp(App):
 
     def on_mount(self) -> None:
         #self.query_one(LoadingIndicator).display = True
-        self.set_focus(self.__main_table__())
         file_tree = self.__files_tree__()
         base_info = self.explorer.file_info(self.explorer.get_base_path())
         root_label =  self.__file_label__(base_info)
         file_tree.root.set_label(root_label)
         file_tree.root.data = base_info
         self.__refresh_top_status__("")
+        self.set_focus(self.__files_tree__())
         self.action_reload_table()
 
 
