@@ -24,7 +24,7 @@ class OneOption(Widget):
     }
     OneOption Label {
         padding: 1;
-        width: 12;
+        width: 20;
         text-align: right;
     }
     OneOption Input {
@@ -42,47 +42,30 @@ class OneOption(Widget):
         yield Input(value=self.input_value)
 
 
-class OptionsScreen(ModalScreen[bool]):
+class OptionsScreen(ModalScreen[dict]):
+
+    def __init__(self, options: dict) -> None:
+        self.init_options = options
+        super().__init__()
+
     def compose(self) -> ComposeResult:
-
         with VerticalScroll(id = "options_container"):
-            yield OneOption("option1", "value1")
-            yield OneOption("option2", "value2")
-            yield OneOption("option3", "value3")
-            yield OneOption("option4", "value4")
-            yield OneOption("option5", "value5")
-            yield OneOption("option6", "value6")
-            yield OneOption("option7", "value7")
-            yield OneOption("option8", "value8")
-
-            # with Horizontal(id = "option1_container"):
-            #     with Vertical():
-            #         yield Static(content="option1")
-            #     with Vertical():
-            #         yield Input(value="value1", disabled=False, id="option1_value")
-            # with Horizontal(id = "option2_container"):
-            #     yield Static(content="option2")
-            #     yield Input(value="value2", disabled=False, id="option2_value")
-            # # with Horizontal(id = "option3_container"):
-            #     yield Static(content="option3")
-            #     yield Input(value="value3", disabled=False, id="option3_value")
-            # with Horizontal(id = "option4_container"):
-            #     yield Static(content="option4")
-            #     yield Input(value="value4", disabled=False, id="option4_value")
+            for key, value in self.init_options.items():
+                yield OneOption(key, str(value))
 
             with Horizontal(id = "options_buttons_container"):
-                yield Button("Yes", id="yes", variant="success")
-                yield Button("No", id="no")
+                yield Button("Ok", id="options_ok", variant="success")
+                yield Button("Cancel", id="options_cancel", variant="default")
 
 
-    @on(Button.Pressed, "#yes")
+    @on(Button.Pressed, "#options_ok")
     def handle_yes(self) -> None:
-        self.dismiss(True)
+        self.dismiss(self.init_options)
 
 
-    @on(Button.Pressed, "#no")
+    @on(Button.Pressed, "#options_cancel")
     def handle_no(self) -> None:
-        self.dismiss(False)
+        self.dismiss(None)
 
 
 class DataApp(App):
@@ -293,7 +276,7 @@ class DataApp(App):
 
     @work
     async def action_change_options(self) -> None:
-        res = await self.push_screen_wait(OptionsScreen())
+        res: dict = await self.push_screen_wait(OptionsScreen(self.explorer.params))
         self.notify(f"Options: {res}")
 
 

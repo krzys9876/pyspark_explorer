@@ -62,8 +62,8 @@ OptionsScreen {
 #options_container {
     background: $secondary;
     align: center middle;
-    width: 60;
-    height: 30;
+    width: 70;
+    height: 25;
 }
 #options_buttons_container {
     background: $secondary;
