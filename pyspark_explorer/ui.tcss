@@ -1,0 +1,38 @@
+Screen {
+    layout: grid;
+    grid-size: 2 3;
+    grid-columns: 1fr 5fr;
+    grid-rows: 3 5fr 5;
+}
+#top_container {
+    column-span: 2;
+    background: $secondary;
+    height: 100%;
+}
+#left_container {
+    background: $boost;
+    height: 100%;
+}
+#main_table_container {
+    layout: grid;
+    grid-size: 1 2;
+    grid-rows: 1fr 1;
+}
+#main_table {
+}
+#main_table_status {
+    width: 100%;
+    background: $secondary;
+}
+#bottom_left_status {
+    background: $secondary;
+    height: 100%;
+}
+#bottom_mid_status {
+    background: $boost;
+    height: 100%;
+}
+#bottom_right_status {
+    background: $secondary;
+    height: 100%;
+}

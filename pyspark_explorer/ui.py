@@ -4,90 +4,19 @@ from textual import on, work
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Vertical
-from textual.screen import Screen
 from textual.widgets import DataTable, Header, Footer, Static, Tree, TabbedContent, Select
 from textual.widgets._tree import TreeNode
 
 from pyspark_explorer.data_table import DataFrameTable, extract_embedded_table
 from pyspark_explorer.explorer import Explorer
-
-
-class BusyScreen(Screen):
-    CSS = """
-    BusyScreen {
-        align: center middle;
-        background: rgba(0,0,0,0.5);
-    }
-    #dialog {
-        background: $secondary;
-        height: 20;
-        width: 30;
-        align: center middle;
-    }
-    #label {
-        align: center middle;
-    }    
-    """
-
-    def compose(self) -> ComposeResult:
-
-        with Vertical(id = "dialog"):
-            yield Static(content=" Waiting for spark session... ", id="label")
-
+from pyspark_explorer.ui_busy_screen import BusyScreen
 
 
 class DataApp(App):
 
     FILE_TYPES = ["PARQUET", "JSON", "CSV"]
 
-    def __init__(self, explorer: Explorer, **kwargs):
-        super(DataApp, self).__init__(**kwargs)
-        self.orig_tab: DataFrameTable = DataFrameTable([],[])
-        self.tab = self.orig_tab
-        self.explorer = explorer
-        self.file_type = self.FILE_TYPES[0]
-
-
-    CSS = """
-        Screen {
-            layout: grid;
-            grid-size: 2 3;
-            grid-columns: 1fr 5fr;
-            grid-rows: 3 5fr 5;
-        }
-        #top_container {
-            column-span: 2;
-            background: $secondary;
-            height: 100%;
-        }
-        #left_container {
-            background: $boost;
-            height: 100%;
-        }
-        #main_table_container {
-            layout: grid;
-            grid-size: 1 2;
-            grid-rows: 1fr 1;
-        }
-        #main_table {
-        }
-        #main_table_status {
-            width: 100%;
-            background: $secondary;
-        }
-        #bottom_left_status {
-            background: $secondary;
-            height: 100%;
-        }
-        #bottom_mid_status {
-            background: $boost;
-            height: 100%;
-        }
-        #bottom_right_status {
-            background: $secondary;
-            height: 100%;
-        }
-        """
+    CSS_PATH = "ui.tcss"
 
     BINDINGS = [
         Binding(key="^q", action="quit", description="Quit the app"),
@@ -97,6 +26,14 @@ class DataApp(App):
         Binding(key="d", action="refresh_current_directory", description="Refresh directory"),
         Binding(key="f", action="read_file", description="Read file sample"),
     ]
+
+
+    def __init__(self, explorer: Explorer, **kwargs):
+        super(DataApp, self).__init__(**kwargs)
+        self.orig_tab: DataFrameTable = DataFrameTable([],[])
+        self.tab = self.orig_tab
+        self.explorer = explorer
+        self.file_type = self.FILE_TYPES[0]
 
 
     def compose(self) -> ComposeResult:
