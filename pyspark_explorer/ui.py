@@ -226,7 +226,12 @@ class DataApp(App):
     @work
     async def action_change_options(self) -> None:
         res: dict = await self.push_screen_wait(OptionsScreen(self.explorer.params))
-        self.notify(f"Options: {res}")
+        if res is None:
+            pass
+        elif res == self.explorer.params:
+            self.notify(f"No options have been changed")
+        else:
+            self.notify(f"Options changed from {self.explorer.params} to: {res}")
 
 
     def __refresh_top_status__(self, path: str) -> None:

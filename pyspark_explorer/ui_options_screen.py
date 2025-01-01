@@ -67,9 +67,14 @@ class OneOptionNum(OneOption):
     def __init__(self, input_label: str, input_value: int) -> None:
         super().__init__(input_label, input_value)
 
+
     def compose(self) -> ComposeResult:
         yield Label(self.input_label)
         yield Input(value=str(self.input_value), type="integer")
+
+
+    def get_value(self):
+        return int(self.query_one(Input).value)
 
 
 class OptionsScreen(ModalScreen[dict]):
