@@ -99,7 +99,7 @@ class Explorer:
         l = self.fs.listStatus(self.spark._jvm.org.apache.hadoop.fs.Path(path))
         if self.get_sort_files_desc():
             l = list(reversed(l))
-        for f in l[:self.params["file_limit"]]:
+        for f in l[:self.get_file_limit()]:
             file = self.__file_info__(f.getPath())
             files.append(file)
 
@@ -113,7 +113,7 @@ class Explorer:
     def read_file(self, file_format: str, path: str) -> DataFrameTable | None:
         try:
             df = self.spark.read.format(file_format).load(path)
-            tab = DataFrameTable(df.schema.fields, df.take(self.params["take_rows"]), True)
+            tab = DataFrameTable(df.schema.fields, df.take(self.get_take_rows()), True)
         except Exception as e:
             tab = None
 
