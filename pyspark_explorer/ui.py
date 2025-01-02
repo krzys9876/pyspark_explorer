@@ -26,6 +26,7 @@ class DataApp(App):
         Binding(key="r", action="reload_table", description="Reset data view"),
         Binding(key="u", action="refresh_table", description="Refresh view", show=False),
         Binding(key="o", action="change_options", description="Options"),
+        Binding(key="s", action="save_options", description="Save config"),
         Binding(key="^q", action="Force quit", description="Quit the app"),
     ]
 
@@ -243,6 +244,11 @@ class DataApp(App):
             if base_path_changed:
                 self.__read_base_path__()
             self.__refresh_top_status__()
+
+
+    def action_save_options(self) -> None:
+        self.notify("Saving config to file (user_home/.pyspark-explorer)")
+        self.explorer.save_params()
 
 
     def __refresh_top_status__(self) -> None:

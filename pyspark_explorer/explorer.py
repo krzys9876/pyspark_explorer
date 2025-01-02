@@ -1,8 +1,24 @@
+import json
 import math
+import os
 
 from pyspark.sql import SparkSession
 
 from pyspark_explorer.data_table import DataFrameTable
+
+
+def __config_dir__() -> str:
+    home_dir = os.path.expanduser('~')
+    return os.path.join(home_dir, ".pyspark-explorer")
+
+
+def __ensure_config_dir_exists__() -> None:
+    if not os.path.exists(__config_dir__()):
+        os.makedirs(__config_dir__())
+
+
+def __config_file__() -> str:
+    return os.path.join(__config_dir__(), "config.json")
 
 
 def __ensure_path_separator__(path: str) -> str:
@@ -25,12 +41,15 @@ class Explorer:
     def __init__(self, spark: SparkSession, base_path: str) -> None:
         self.spark = spark
         self.fs = spark._jvm.org.apache.hadoop.fs.FileSystem.get(spark._jsc.hadoopConfiguration())
+        # default params
         self.params = {
             "base_path": base_path,
             "file_limit": 300,
             "take_rows": 1000,
             "sort_files_desc": False
         }
+        # load params from file (if exists)
+        self.load_params()
 
 
     def get_base_path(self) -> str:
@@ -99,3 +118,19 @@ class Explorer:
             tab = None
 
         return tab
+
+
+    def save_params(self) -> None:
+        __ensure_config_dir_exists__()
+        with open(__config_file__(), "w") as f:
+            f.write(json.dumps(self.params))
+
+
+    def load_params(self) -> None:
+        if os.path.exists(__config_file__()):
+            with open(__config_file__(), "r") as f:
+                try:
+                    self.params.update(**json.loads(f.read()))
+                except Exception as e:
+                    # ignore any loading errors, just use default params
+                    pass
