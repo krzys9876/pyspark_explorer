@@ -96,7 +96,7 @@ class Explorer:
         if st.isFile():
             return []
 
-        l = self.fs.listStatus(self.spark._jvm.org.apache.hadoop.fs.Path(path))
+        l = self.fs.listStatus(self.spark._jvm.org.apache.hadoop.fs.Path(path), self.spark._jvm.org.apache.hadoop.fs.GlobFilter("*"))
         if self.get_sort_files_desc():
             l = list(reversed(l))
         for f in l[:self.get_file_limit()]:
