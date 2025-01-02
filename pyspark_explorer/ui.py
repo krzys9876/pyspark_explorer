@@ -36,6 +36,7 @@ class DataApp(App):
         self.tab = self.orig_tab
         self.explorer = explorer
         self.file_type = self.FILE_TYPES[0]
+        self.current_file = None
 
 
     def compose(self) -> ComposeResult:
@@ -89,15 +90,19 @@ class DataApp(App):
 
 
     def on_mount(self) -> None:
-        #self.query_one(LoadingIndicator).display = True
-        file_tree = self.__files_tree__()
-        base_info = self.explorer.file_info(self.explorer.get_base_path())
-        root_label =  self.__file_label__(base_info)
-        file_tree.root.set_label(root_label)
-        file_tree.root.data = base_info
-        self.__refresh_top_status__("")
+        self.__read_base_path__()
+        self.__refresh_top_status__()
         self.set_focus(self.__files_tree__())
         self.action_reload_table()
+
+
+    def __read_base_path__(self) -> None:
+        file_tree = self.__files_tree__()
+        file_tree.clear()
+        base_info = self.explorer.file_info(self.explorer.get_base_path())
+        root_label = self.__file_label__(base_info)
+        file_tree.root.set_label(root_label)
+        file_tree.root.data = base_info
 
 
     @on(Select.Changed)
@@ -217,10 +222,11 @@ class DataApp(App):
 
         #TODO: improve this very simplistic approach to error handling
         if tab is None:
-            self.notify(f"Error occured reading file: {path}")
+            self.notify(f"Error occurred reading file: {path}")
         else:
             self.orig_tab = tab
-            self.__refresh_top_status__(path)
+            self.current_file = path
+            self.__refresh_top_status__()
             self.action_reload_table()
 
     @work
@@ -232,13 +238,21 @@ class DataApp(App):
             self.notify(f"No options have been changed")
         else:
             self.notify(f"Options changed from {self.explorer.params} to: {res}")
+            base_path_changed = self.explorer.get_base_path()!=res["base_path"]
+            self.explorer.params = res
+            if base_path_changed:
+                self.__read_base_path__()
+            self.__refresh_top_status__()
 
 
-    def __refresh_top_status__(self, path: str) -> None:
+    def __refresh_top_status__(self) -> None:
         status = self.__top_status__()
-        path_fragment = path if len(path) < len(self.explorer.get_base_path()) else f"{path[len(self.explorer.get_base_path())-1:]}"
+        base_path = self.explorer.get_base_path()
+        path = self.current_file if self.current_file is not None else ""
+        path_fragment = path[len(base_path):] if len(path) > len(base_path) and path[:len(base_path)] == base_path else path
         status_txt = (f"Base path: {self.explorer.get_base_path()} | Loaded file: {path_fragment}\n" +
-                      f"Rows: {self.explorer.get_take_rows()} | Files: {self.explorer.get_file_limit()}")
+                      f"Read rows: {self.explorer.get_take_rows()} | Show files: {self.explorer.get_file_limit()} | "+
+                      f"Sort files {"desc." if self.explorer.get_sort_files_desc() else "asc."}")
         status.update(status_txt)
 
 

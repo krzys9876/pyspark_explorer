@@ -27,10 +27,9 @@ class Explorer:
         self.fs = spark._jvm.org.apache.hadoop.fs.FileSystem.get(spark._jsc.hadoopConfiguration())
         self.params = {
             "base_path": base_path,
-            "auto_refresh": True,
             "file_limit": 300,
             "take_rows": 1000,
-            "sort_file_desc": False
+            "sort_files_desc": False
         }
 
 
@@ -44,6 +43,14 @@ class Explorer:
 
     def get_file_limit(self) -> int:
         return self.params["file_limit"]
+
+
+    def get_sort_files_desc(self) -> bool:
+        return self.params["sort_files_desc"]
+
+
+    def get_sort_files_as_dirs(self) -> bool:
+        return self.params["get_sort_files_as_dirs"]
 
 
     def __file_info__(self, path) -> {}:
@@ -71,7 +78,7 @@ class Explorer:
             return []
 
         l = self.fs.listStatus(self.spark._jvm.org.apache.hadoop.fs.Path(path))
-        if self.params["sort_file_desc"]:
+        if self.get_sort_files_desc():
             l = list(reversed(l))
         for f in l[:self.params["file_limit"]]:
             file = self.__file_info__(f.getPath())
