@@ -252,7 +252,7 @@ class DataApp(App):
         path_fragment = path[len(base_path):] if len(path) > len(base_path) and path[:len(base_path)] == base_path else path
         status_txt = (f"Base path: {self.explorer.get_base_path()} | Loaded file: {path_fragment}\n" +
                       f"Read rows: {self.explorer.get_take_rows()} | Show files: {self.explorer.get_file_limit()} | "+
-                      f"Sort files {"desc." if self.explorer.get_sort_files_desc() else "asc."}")
+                      f"Sort files {'desc.' if self.explorer.get_sort_files_desc() else 'asc.'}")
         status.update(status_txt)
 
 
