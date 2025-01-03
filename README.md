@@ -58,7 +58,10 @@ I recommend that you provide a base path. For local files that could be for exam
     # Linux
     pyspark-explorer file:///home/myuser/datafiles/base_path
     # Windows
-    pyspark-explorer file:///c:/datafiles/base_path
+    pyspark-explorer file:/c:/datafiles/base_path
+
+For remote location:
+
     # Remote hdfs cluster
     pyspark-explorer hdfs://somecluster/datafiles/base_path
 
