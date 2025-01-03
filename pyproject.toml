@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pyspark-explorer"
-version = "0.0.15"
+version = "0.0.16"
 dependencies = [
   "pyspark>=3.5.1",
   "textual>=1.0.0"

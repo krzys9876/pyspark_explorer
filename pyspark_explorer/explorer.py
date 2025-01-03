@@ -46,7 +46,8 @@ class Explorer:
             "base_path": base_path,
             "file_limit": 300,
             "take_rows": 1000,
-            "sort_files_desc": False
+            "sort_files_desc": False,
+            "sort_files_as_dirs": False,
         }
         # load params from file (if exists)
         self.load_params()
@@ -69,7 +70,7 @@ class Explorer:
 
 
     def get_sort_files_as_dirs(self) -> bool:
-        return self.params["get_sort_files_as_dirs"]
+        return self.params["sort_files_as_dirs"]
 
 
     def __file_info__(self, path) -> {}:
@@ -97,13 +98,15 @@ class Explorer:
             return []
 
         l = self.fs.listStatus(self.spark._jvm.org.apache.hadoop.fs.Path(path), self.spark._jvm.org.apache.hadoop.fs.GlobFilter("*"))
-        if self.get_sort_files_desc():
-            l = list(reversed(l))
         for f in l[:self.get_file_limit()]:
             file = self.__file_info__(f.getPath())
             files.append(file)
 
-        return files
+        files_sorted = sorted(files,
+                              key=lambda f: (f["name"]) if self.get_sort_files_as_dirs() else (0 if f["is_dir"] else 1, f["name"]),
+                              reverse=self.get_sort_files_desc())
+
+        return files_sorted
 
 
     def file_info(self, path: str) -> {}:
