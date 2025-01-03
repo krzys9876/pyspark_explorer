@@ -53,7 +53,9 @@ Run:
 
     pyspark-explorer
 
-I recommend that you provide a base path. For local files that could be for example:
+You may wish to provide a base path upfront. It can be changed at any time (press _o_ for _Options_).
+
+For local files that could be for example:
 
     # Linux
     pyspark-explorer file:///home/myuser/datafiles/base_path
@@ -66,3 +68,6 @@ For remote location:
     pyspark-explorer hdfs://somecluster/datafiles/base_path
 
 Default path is set to /, which represents local root filesystem and works fine even in Windows thanks to Spark logics.
+
+Configuration files are saved to your home directory (_.pyspark-explorer_ subdirectory). 
+These are json files so you are free to edit them.
