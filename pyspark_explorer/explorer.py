@@ -21,6 +21,20 @@ def __config_file__() -> str:
     return os.path.join(__config_dir__(), "config.json")
 
 
+def __spark_options_file__() -> str:
+    return os.path.join(__config_dir__(), "spark-options.json")
+
+
+def __read_config__(file: str) -> dict | None:
+    if os.path.exists(file):
+        with open(file, "r") as f:
+            try:
+                return json.loads(f.read())
+            except Exception as e:
+                # ignore any loading errors, just use default params
+                return None
+
+
 def __ensure_path_separator__(path: str) -> str:
     res = path.strip()
     return res + ("" if res.endswith("/") else "/")
@@ -49,8 +63,13 @@ class Explorer:
             "sort_files_desc": False,
             "sort_files_as_dirs": False,
         }
+        self.spark_options = {
+            "CSV": {"header": "false", "dateFormat": "yyyy-MM-dd", "timestampFormat": "yyyy-MM-dd HH:mm:ss", "delimiter": ";"},
+            "JSON": {"dateFormat": "yyyy-MM-dd", "timestampFormat": "yyyy-MM-dd HH:mm:ss"}
+        }
         # load params from file (if exists)
         self.load_params()
+
 
 
     def get_base_path(self) -> str:
@@ -115,7 +134,8 @@ class Explorer:
 
     def read_file(self, file_format: str, path: str) -> DataFrameTable | None:
         try:
-            df = self.spark.read.format(file_format).load(path)
+            options = self.spark_options[file_format] if file_format in self.spark_options else {}
+            df = self.spark.read.options(**options).format(file_format).load(path)
             tab = DataFrameTable(df.schema.fields, df.take(self.get_take_rows()), True)
         except Exception as e:
             tab = None
@@ -127,13 +147,14 @@ class Explorer:
         __ensure_config_dir_exists__()
         with open(__config_file__(), "w") as f:
             f.write(json.dumps(self.params))
+        with open(__spark_options_file__(), "w") as f:
+            f.write(json.dumps(self.spark_options))
 
 
     def load_params(self) -> None:
-        if os.path.exists(__config_file__()):
-            with open(__config_file__(), "r") as f:
-                try:
-                    self.params.update(**json.loads(f.read()))
-                except Exception as e:
-                    # ignore any loading errors, just use default params
-                    pass
+        params_from_file = __read_config__(__config_file__())
+        if params_from_file is not None:
+            self.params.update(params_from_file)
+        spark_options_from_file = __read_config__(__spark_options_file__())
+        if spark_options_from_file is not None:
+            self.spark_options.update(spark_options_from_file)
