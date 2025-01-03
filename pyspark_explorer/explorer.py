@@ -61,7 +61,7 @@ class Explorer:
             "file_limit": 300,
             "take_rows": 1000,
             "sort_files_desc": False,
-            "sort_files_as_dirs": False,
+            "sort_dirs_as_files": False,
         }
         self.spark_options = {
             "CSV": {"header": "false", "dateFormat": "yyyy-MM-dd", "timestampFormat": "yyyy-MM-dd HH:mm:ss", "delimiter": ";"},
@@ -88,8 +88,8 @@ class Explorer:
         return self.params["sort_files_desc"]
 
 
-    def get_sort_files_as_dirs(self) -> bool:
-        return self.params["sort_files_as_dirs"]
+    def get_sort_dirs_as_files(self) -> bool:
+        return self.params["sort_dirs_as_files"]
 
 
     def __file_info__(self, path) -> {}:
@@ -122,7 +122,7 @@ class Explorer:
             files.append(file)
 
         files_sorted = sorted(files,
-                              key=lambda f: (f["name"]) if self.get_sort_files_as_dirs() else (0 if f["is_dir"] else 1, f["name"]),
+                              key=lambda f: (f["name"]) if self.get_sort_dirs_as_files() else (0 if f["is_dir"] else 1, f["name"]),
                               reverse=self.get_sort_files_desc())
 
         return files_sorted
