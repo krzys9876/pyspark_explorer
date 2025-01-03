@@ -76,7 +76,7 @@ OptionsScreen {
     background: $secondary;
     align: center top;
     width: 70;
-    height: 19;
+    height: 22;
 }
 #options_buttons_container {
     background: $secondary;
