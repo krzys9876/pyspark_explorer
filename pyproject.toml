@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pyspark-explorer"
-version = "0.0.16"
+version = "0.1.0"
 dependencies = [
   "pyspark>=3.5.1",
   "textual>=1.0.0"
@@ -21,7 +21,7 @@ readme = "README.md"
 license = {file = "LICENSE"}
 keywords = ["pyspark", "spark", "explorer", "data"]
 classifiers = [
-  "Development Status :: 3 - Alpha",
+  "Development Status :: 4 - Beta",
   "Programming Language :: Python"
 ]
 
