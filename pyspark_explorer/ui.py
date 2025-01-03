@@ -320,14 +320,13 @@ class DataApp(App):
     def action_view_narrow(self) -> None:
         self.add_class("narrow")
         self.remove_class("wide")
-        self.notify("View narrow mode")
+
 
     def action_view_normal(self) -> None:
         self.remove_class("narrow")
         self.remove_class("wide")
-        self.notify("View normal mode")
+
 
     def action_view_wide(self) -> None:
         self.remove_class("narrow")
         self.add_class("wide")
-        self.notify("View wide mode")
