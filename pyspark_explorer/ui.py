@@ -191,7 +191,10 @@ class DataApp(App):
         current_file.remove_children()
         for f in dir_contents:
             label = self.__file_label__(f)
-            current_file.add(label=label, data=f)
+            if f["is_dir"]:
+                current_file.add(label=label, data=f)
+            else:
+                current_file.add_leaf(label=label, data=f)
 
         current_file.expand()
 
