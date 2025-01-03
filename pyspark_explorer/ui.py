@@ -27,6 +27,9 @@ class DataApp(App):
         Binding(key="u", action="refresh_table", description="Refresh view", show=False),
         Binding(key="o", action="change_options", description="Options"),
         Binding(key="s", action="save_options", description="Save config"),
+        Binding(key="1", action="view_narrow", description="Narrow view"),
+        Binding(key="2", action="view_normal", description="Normal view"),
+        Binding(key="3", action="view_wide", description="Wide view"),
         Binding(key="^q", action="Force quit", description="Quit the app"),
     ]
 
@@ -64,6 +67,8 @@ class DataApp(App):
             yield Static("", id="bottom_mid_status")
             yield Footer(show_command_palette=True)
 
+    def __main_container__(self) -> Static:
+        return self.get_widget_by_id(id="main_container", expect_type=Static)
 
     def __tab_container__(self) -> TabbedContent:
         return self.get_widget_by_id(id="tab_container", expect_type=TabbedContent)
@@ -311,3 +316,18 @@ class DataApp(App):
             status_text = f"{data['name']}\n{data['type']} {data['hr_size']} ({data['size']})"
         type_status.update(status_text)
 
+
+    def action_view_narrow(self) -> None:
+        self.add_class("narrow")
+        self.remove_class("wide")
+        self.notify("View narrow mode")
+
+    def action_view_normal(self) -> None:
+        self.remove_class("narrow")
+        self.remove_class("wide")
+        self.notify("View normal mode")
+
+    def action_view_wide(self) -> None:
+        self.remove_class("narrow")
+        self.add_class("wide")
+        self.notify("View wide mode")

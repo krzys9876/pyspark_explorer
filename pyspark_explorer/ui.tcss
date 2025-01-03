@@ -4,10 +4,16 @@ Screen {
 #main_container {
     layout: grid;
     grid-size: 2 3;
-    grid-columns: 1fr 5fr;
+    grid-columns: 3fr 7fr;
     grid-rows: 4 5fr 5;
     width: 100%;
     height: 100%;
+}
+.narrow #main_container {
+    grid-columns: 1fr 9fr;
+}
+.wide #main_container {
+    grid-columns: 5fr 5fr;
 }
 #top_container {
     column-span: 2;
