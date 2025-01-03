@@ -27,9 +27,9 @@ class DataApp(App):
         Binding(key="u", action="refresh_table", description="Refresh view", show=False),
         Binding(key="o", action="change_options", description="Options"),
         Binding(key="s", action="save_options", description="Save config"),
-        Binding(key="1", action="view_narrow", description="Narrow view"),
-        Binding(key="2", action="view_normal", description="Normal view"),
-        Binding(key="3", action="view_wide", description="Wide view"),
+        Binding(key="1", action="view_narrow", description="1:8"),
+        Binding(key="2", action="view_normal", description="1:3"),
+        Binding(key="3", action="view_wide", description="1:1"),
         Binding(key="^q", action="Force quit", description="Quit the app"),
     ]
 
