@@ -114,13 +114,13 @@ class Explorer:
         return file
 
 
-    def read_directory(self, path: str) -> []:
+    def read_directory(self, path: str, filename_filter: str) -> []:
         files: [dict] = []
         st = self.fs.getFileStatus(self.spark._jvm.org.apache.hadoop.fs.Path(path))
         if st.isFile():
             return []
 
-        l = self.fs.listStatus(self.spark._jvm.org.apache.hadoop.fs.Path(path), self.spark._jvm.org.apache.hadoop.fs.GlobFilter("*"))
+        l = self.fs.listStatus(self.spark._jvm.org.apache.hadoop.fs.Path(path), self.spark._jvm.org.apache.hadoop.fs.GlobFilter(filename_filter))
         for f in l[:self.get_file_limit()]:
             file = self.__file_info__(f.getPath())
             files.append(file)

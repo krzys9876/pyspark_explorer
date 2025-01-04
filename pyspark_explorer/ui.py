@@ -10,6 +10,7 @@ from textual.widgets._tree import TreeNode
 from pyspark_explorer.data_table import DataFrameTable, extract_embedded_table
 from pyspark_explorer.explorer import Explorer
 from pyspark_explorer.ui_busy_screen import BusyScreen
+from pyspark_explorer.ui_filters_screen import FiltersScreen
 from pyspark_explorer.ui_options_screen import OptionsScreen
 
 
@@ -22,7 +23,9 @@ class DataApp(App):
     BINDINGS = [
         #Binding(key="question_mark", action="help", description="Show help screen", key_display="?"),
         Binding(key="d", action="refresh_current_directory", description="Read directory"),
+        Binding(key="D", action="refresh_current_directory_with_filter", description="with filter"),
         Binding(key="f", action="read_file", description="Read file"),
+        #Binding(key="F", action="read_file_with_filter", description="with filter"),
         Binding(key="r", action="reload_table", description="Reset data view"),
         Binding(key="u", action="refresh_table", description="Refresh view", show=False),
         Binding(key="o", action="change_options", description="Options"),
@@ -175,6 +178,22 @@ class DataApp(App):
 
 
     def action_refresh_current_directory(self) -> None:
+        self.__refresh_current_directory__("*")
+
+
+    @work
+    async def action_refresh_current_directory_with_filter(self) -> None:
+        res = await self.push_screen_wait(FiltersScreen("Enter filter for files and dirs", ["*"]))
+        if res is None:
+            pass
+        elif len(res) == 0:
+            self.notify(f"No filename filter selected")
+        else:
+            self.notify(f"Filter selected: {res}")
+            self.__refresh_current_directory__(res)
+
+
+    def __refresh_current_directory__(self, filter: str) -> None:
         current_file = self.__files_tree__().cursor_node
         if current_file is None:
             self.notify(f"No file/directory selected")
@@ -187,7 +206,7 @@ class DataApp(App):
         self.set_focus(self.__files_tree__())
         self.notify(f"Refreshing {current_file.data['name']}") # {current_file.data}")
         path = current_file.data["full_path"]
-        dir_contents = self.explorer.read_directory(path)
+        dir_contents = self.explorer.read_directory(path,filter)
         current_file.remove_children()
         for f in dir_contents:
             label = self.__file_label__(f)
@@ -217,6 +236,16 @@ class DataApp(App):
 
         self.read_file(current_file.data["full_path"], file_type)
 
+
+    @work
+    async def action_read_file_with_filter(self) -> None:
+        res = await self.push_screen_wait(FiltersScreen("Enter spark filter", ["(1=1)"]))
+        if res is None:
+            pass
+        elif len(res) == 0:
+            self.notify(f"No filter selected")
+        else:
+            self.notify(f"Filtering file with: {res}")
 
 
     @work

@@ -83,3 +83,25 @@ OptionsScreen {
     align: center bottom;
     height: 3
 }
+
+FiltersScreen {
+    align: center middle;
+    background: rgba(0,0,0,0.5);
+}
+#filters_header {
+    text-align: center;
+    background: $boost;
+    width: 100%;
+    height: 1;
+}
+#filters_container {
+    background: $secondary;
+    align: center top;
+    width: 90;
+    height: 10;
+}
+#filters_buttons_container {
+    background: $secondary;
+    align: center bottom;
+    height: 3
+}
