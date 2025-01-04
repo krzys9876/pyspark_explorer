@@ -56,21 +56,25 @@ class Explorer:
         self.spark = spark
         self.fs = spark._jvm.org.apache.hadoop.fs.FileSystem.get(spark._jsc.hadoopConfiguration())
         # default params
-        self.params = {
-            "base_path": base_path,
+        self.params = self.DEFAULT_PARAMS.copy()
+        self.params["base_path"] = base_path
+        self.spark_options = self.DEFAULT_SPARK_OPTIONS.copy()
+        # load params from file (if exists)
+        self.load_params()
+
+
+    DEFAULT_PARAMS = {
+            "base_path": "/",
             "file_limit": 300,
             "take_rows": 1000,
             "sort_files_desc": False,
             "sort_dirs_as_files": False,
         }
-        self.spark_options = {
-            "CSV": {"header": "false", "dateFormat": "yyyy-MM-dd", "timestampFormat": "yyyy-MM-dd HH:mm:ss", "delimiter": ";"},
-            "JSON": {"dateFormat": "yyyy-MM-dd", "timestampFormat": "yyyy-MM-dd HH:mm:ss"}
-        }
-        # load params from file (if exists)
-        self.load_params()
 
-
+    DEFAULT_SPARK_OPTIONS = {
+        "CSV": {"header": "false", "dateFormat": "yyyy-MM-dd", "timestampFormat": "yyyy-MM-dd HH:mm:ss", "delimiter": ";"},
+        "JSON": {"dateFormat": "yyyy-MM-dd", "timestampFormat": "yyyy-MM-dd HH:mm:ss"}
+    }
 
     def get_base_path(self) -> str:
         return self.params["base_path"]
@@ -155,6 +159,11 @@ class Explorer:
         params_from_file = __read_config__(__config_file__())
         if params_from_file is not None:
             self.params.update(params_from_file)
+            # remove incorrect params
+            for p in params_from_file:
+                if p=="sort_files_as_dirs" and (p not in self.DEFAULT_PARAMS) and (p in self.params):
+                    del self.params[p]
+
         spark_options_from_file = __read_config__(__spark_options_file__())
         if spark_options_from_file is not None:
             self.spark_options.update(spark_options_from_file)
