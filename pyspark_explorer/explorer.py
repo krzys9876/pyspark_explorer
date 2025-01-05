@@ -1,6 +1,7 @@
 import json
 import math
 import os
+from datetime import datetime
 
 from pyspark.sql import SparkSession
 
@@ -31,6 +32,10 @@ def __file_filters_file__() -> str:
 
 def __spark_filters_file__() -> str:
     return os.path.join(__config_dir__(), "spark-filters.json")
+
+
+def __spark_errors_log_file__() -> str:
+    return os.path.join(__config_dir__(), "spark-error.log")
 
 
 def __read_config__(file: str) -> dict | None:
@@ -183,6 +188,9 @@ class Explorer:
             df = self.spark.read.options(**options).format(file_format).load(path).filter(filter)
             tab = DataFrameTable(df.schema.fields, df.take(self.get_take_rows()), True)
         except Exception as e:
+            dt = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            with open(__spark_errors_log_file__(), "a") as f:
+                f.writelines([dt,"\n",path,"\n",str(e),"\n"])
             tab = None
 
         return tab

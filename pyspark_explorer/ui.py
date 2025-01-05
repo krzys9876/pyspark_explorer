@@ -267,7 +267,7 @@ class DataApp(App):
 
         #TODO: improve this very simplistic approach to error handling
         if tab is None:
-            self.notify(f"Error occurred reading file: {path}")
+            self.notify(f"Error occurred reading file: {path}\nSee log file for details (user_home/.pyspark-explorer)")
         else:
             self.orig_tab = tab
             self.current_file = path

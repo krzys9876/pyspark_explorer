@@ -88,3 +88,5 @@ Note that you will not be able to open any JSON file - only those with _correct_
     Instead, you can cache or save the parsed results and then send the same query.
     For example, val df = spark.read.schema(schema).csv(file).cache() and then
     df.filter($"_corrupt_record".isNotNull).count().
+
+You can find the log file in your home directory (_.pyspark-explorer_ subdirectory).
