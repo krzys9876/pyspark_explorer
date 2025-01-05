@@ -183,13 +183,14 @@ class DataApp(App):
 
     @work
     async def action_refresh_current_directory_with_filter(self) -> None:
-        res = await self.push_screen_wait(FiltersScreen("Enter filter for files and dirs", ["*"]))
+        res = await self.push_screen_wait(FiltersScreen("Enter filter for files and dirs", self.explorer.get_file_filters()))
         if res is None:
             pass
         elif len(res) == 0:
             self.notify(f"No filename filter selected")
         else:
             self.notify(f"Filter selected: {res}")
+            self.explorer.add_as_first_file_filter(res)
             self.__refresh_current_directory__(res)
 
 

@@ -25,6 +25,10 @@ def __spark_options_file__() -> str:
     return os.path.join(__config_dir__(), "spark-options.json")
 
 
+def __file_filters_file__() -> str:
+    return os.path.join(__config_dir__(), "file-filters.json")
+
+
 def __read_config__(file: str) -> dict | None:
     if os.path.exists(file):
         with open(file, "r") as f:
@@ -59,6 +63,7 @@ class Explorer:
         self.params = self.DEFAULT_PARAMS.copy()
         self.params["base_path"] = base_path
         self.spark_options = self.DEFAULT_SPARK_OPTIONS.copy()
+        self.file_filters = self.DEFAULT_FILE_FILTERS.copy()
         # load params from file (if exists)
         self.load_params()
 
@@ -75,6 +80,8 @@ class Explorer:
         "CSV": {"header": "false", "dateFormat": "yyyy-MM-dd", "timestampFormat": "yyyy-MM-dd HH:mm:ss", "delimiter": ";"},
         "JSON": {"dateFormat": "yyyy-MM-dd", "timestampFormat": "yyyy-MM-dd HH:mm:ss"}
     }
+
+    DEFAULT_FILE_FILTERS = {"filters": ["*"]}
 
     def get_base_path(self) -> str:
         return self.params["base_path"]
@@ -94,6 +101,17 @@ class Explorer:
 
     def get_sort_dirs_as_files(self) -> bool:
         return self.params["sort_dirs_as_files"]
+
+
+    def get_file_filters(self) -> []:
+        return self.file_filters["filters"]
+
+
+    def add_as_first_file_filter(self, last_filter: str) -> None:
+        # insert last selected filter at the head of list
+        while last_filter in self.file_filters["filters"]:
+            self.file_filters["filters"].remove(last_filter)
+        self.file_filters["filters"].insert(0, last_filter)
 
 
     def __file_info__(self, path) -> {}:
@@ -153,6 +171,8 @@ class Explorer:
             f.write(json.dumps(self.params))
         with open(__spark_options_file__(), "w") as f:
             f.write(json.dumps(self.spark_options))
+        with open(__file_filters_file__(), "w") as f:
+            f.write(json.dumps(self.file_filters))
 
 
     def load_params(self) -> None:
@@ -167,3 +187,10 @@ class Explorer:
         spark_options_from_file = __read_config__(__spark_options_file__())
         if spark_options_from_file is not None:
             self.spark_options.update(spark_options_from_file)
+
+        file_filters_from_file = __read_config__(__file_filters_file__())
+        if file_filters_from_file is not None:
+            self.file_filters.update(file_filters_from_file)
+            # just in case - ensure filters are present
+            if "filters" not in self.file_filters:
+                self.file_filters.update(self.DEFAULT_FILE_FILTERS)
