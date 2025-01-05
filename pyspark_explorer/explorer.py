@@ -29,6 +29,10 @@ def __file_filters_file__() -> str:
     return os.path.join(__config_dir__(), "file-filters.json")
 
 
+def __spark_filters_file__() -> str:
+    return os.path.join(__config_dir__(), "spark-filters.json")
+
+
 def __read_config__(file: str) -> dict | None:
     if os.path.exists(file):
         with open(file, "r") as f:
@@ -64,6 +68,7 @@ class Explorer:
         self.params["base_path"] = base_path
         self.spark_options = self.DEFAULT_SPARK_OPTIONS.copy()
         self.file_filters = self.DEFAULT_FILE_FILTERS.copy()
+        self.spark_filters = self.DEFAULT_SPARK_FILTERS.copy()
         # load params from file (if exists)
         self.load_params()
 
@@ -82,6 +87,8 @@ class Explorer:
     }
 
     DEFAULT_FILE_FILTERS = {"filters": ["*"]}
+
+    DEFAULT_SPARK_FILTERS = {"filters": ["1=1"]}
 
     def get_base_path(self) -> str:
         return self.params["base_path"]
@@ -104,14 +111,30 @@ class Explorer:
 
 
     def get_file_filters(self) -> []:
-        return self.file_filters["filters"]
+        return self.file_filters["filters"].copy()
 
 
-    def add_as_first_file_filter(self, last_filter: str) -> None:
-        # insert last selected filter at the head of list
-        while last_filter in self.file_filters["filters"]:
-            self.file_filters["filters"].remove(last_filter)
-        self.file_filters["filters"].insert(0, last_filter)
+    def get_spark_filters(self) -> []:
+        return self.spark_filters["filters"].copy()
+
+
+    def add_as_first_file_filter(self, current_filter: str) -> None:
+        self.file_filters = self.__add_as_first_filter__(current_filter, self.file_filters)
+
+
+    def add_as_first_spark_filter(self, current_filter: str) -> None:
+        self.spark_filters = self.__add_as_first_filter__(current_filter, self.spark_filters)
+
+
+    @staticmethod
+    def __add_as_first_filter__(current_filter: str, filter_list: [str]) -> [str]:
+        # insert recently selected filter at the head of list
+        filters = filter_list.copy()
+        while current_filter in filters["filters"]:
+            filters["filters"].remove(current_filter)
+        filters["filters"].insert(0, current_filter)
+        return filters
+
 
 
     def __file_info__(self, path) -> {}:
@@ -173,6 +196,8 @@ class Explorer:
             f.write(json.dumps(self.spark_options))
         with open(__file_filters_file__(), "w") as f:
             f.write(json.dumps(self.file_filters))
+        with open(__spark_filters_file__(), "w") as f:
+            f.write(json.dumps(self.spark_filters))
 
 
     def load_params(self) -> None:
@@ -188,9 +213,16 @@ class Explorer:
         if spark_options_from_file is not None:
             self.spark_options.update(spark_options_from_file)
 
-        file_filters_from_file = __read_config__(__file_filters_file__())
-        if file_filters_from_file is not None:
-            self.file_filters.update(file_filters_from_file)
+        self.file_filters = self.__load_filters__(__file_filters_file__(), self.file_filters, self.DEFAULT_FILE_FILTERS)
+        self.spark_filters = self.__load_filters__(__spark_filters_file__(), self.spark_filters, self.DEFAULT_SPARK_FILTERS)
+
+    @staticmethod
+    def __load_filters__(file: str, initial: dict, default: dict) -> dict:
+        filters_from_file = __read_config__(file)
+        res = initial.copy()
+        if filters_from_file is not None:
+            res.update(filters_from_file)
             # just in case - ensure filters are present
-            if "filters" not in self.file_filters:
-                self.file_filters.update(self.DEFAULT_FILE_FILTERS)
+            if "filters" not in initial:
+                res.update(default)
+        return res

@@ -25,7 +25,7 @@ class DataApp(App):
         Binding(key="d", action="refresh_current_directory", description="Read directory"),
         Binding(key="D", action="refresh_current_directory_with_filter", description="with filter"),
         Binding(key="f", action="read_file", description="Read file"),
-        #Binding(key="F", action="read_file_with_filter", description="with filter"),
+        Binding(key="F", action="read_file_with_filter", description="with filter"),
         Binding(key="r", action="reload_table", description="Reset data view"),
         Binding(key="u", action="refresh_table", description="Refresh view", show=False),
         Binding(key="o", action="change_options", description="Options"),
@@ -240,13 +240,14 @@ class DataApp(App):
 
     @work
     async def action_read_file_with_filter(self) -> None:
-        res = await self.push_screen_wait(FiltersScreen("Enter spark filter", ["(1=1)"]))
+        res = await self.push_screen_wait(FiltersScreen("Enter spark filter", self.explorer.get_spark_filters()))
         if res is None:
             pass
         elif len(res) == 0:
             self.notify(f"No filter selected")
         else:
             self.notify(f"Filtering file with: {res}")
+            self.explorer.add_as_first_spark_filter(res)
 
 
     @work
