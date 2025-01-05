@@ -1,6 +1,10 @@
 # Spark File Explorer
 When developing spark applications I came across the growing number of data files that I create. 
 
+![pe03](https://github.com/user-attachments/assets/e7d51949-2868-4b1c-ac4a-3807d0f4a41a)
+
+![pe04](https://github.com/user-attachments/assets/442d70e5-8098-4bbf-87db-a9cddbeaf223)
+
 ## CSVs are fine but what about JSON and complex PARQUET files?
 
 To open and explore a file I used Excel to view CSV files, text editors with plugins to view JSON files, 
@@ -71,3 +75,16 @@ Default path is set to /, which represents local root filesystem and works fine 
 
 Configuration files are saved to your home directory (_.pyspark-explorer_ subdirectory). 
 These are json files so you are free to edit them.
+
+# Spark limitations
+
+Note that you will not be able to open any JSON file - only those with _correct_ structure can be viewed. If you try to open a file which has a unacceptable structure, Spark will throw an error like this:
+
+    Since Spark 2.3, the queries from raw JSON/CSV files are disallowed when the
+    referenced columns only include the internal corrupt record column
+    (named _corrupt_record by default). For example:
+    spark.read.schema(schema).csv(file).filter($"_corrupt_record".isNotNull).count()
+    and spark.read.schema(schema).csv(file).select("_corrupt_record").show().
+    Instead, you can cache or save the parsed results and then send the same query.
+    For example, val df = spark.read.schema(schema).csv(file).cache() and then
+    df.filter($"_corrupt_record".isNotNull).count().
