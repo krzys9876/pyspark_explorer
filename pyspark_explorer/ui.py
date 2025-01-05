@@ -220,6 +220,23 @@ class DataApp(App):
 
 
     def action_read_file(self) -> None:
+        self.__action_read_file__("1=1")
+
+
+    @work
+    async def action_read_file_with_filter(self) -> None:
+        res = await self.push_screen_wait(FiltersScreen("Enter spark filter", self.explorer.get_spark_filters()))
+        if res is None:
+            pass
+        elif len(res) == 0:
+            self.notify(f"No filter selected")
+        else:
+            self.notify(f"Filtering file with: {res}")
+            self.explorer.add_as_first_spark_filter(res)
+            self.__action_read_file__(res)
+
+
+    def __action_read_file__(self, spark_filter: str) -> None:
         #self.query_one(LoadingIndicator).display = True
         current_file = self.__files_tree__().cursor_node
         if current_file is None:
@@ -235,29 +252,17 @@ class DataApp(App):
         else:
             file_type = self.file_type
 
-        self.read_file(current_file.data["full_path"], file_type)
+        self.__read_file__(current_file.data["full_path"], file_type, spark_filter)
 
 
     @work
-    async def action_read_file_with_filter(self) -> None:
-        res = await self.push_screen_wait(FiltersScreen("Enter spark filter", self.explorer.get_spark_filters()))
-        if res is None:
-            pass
-        elif len(res) == 0:
-            self.notify(f"No filter selected")
-        else:
-            self.notify(f"Filtering file with: {res}")
-            self.explorer.add_as_first_spark_filter(res)
-
-
-    @work
-    async def read_file(self, path: str, file_type: str) -> None:
+    async def __read_file__(self, path: str, file_type: str, spark_filter: str) -> None:
         self.notify(f"Reading file as {file_type}\n{path}")
 
         await self.push_screen(BusyScreen())
         await asyncio.sleep(1)
         self.refresh()
-        tab = self.explorer.read_file(file_type, path)
+        tab = self.explorer.read_file(file_type, path, spark_filter)
         await self.pop_screen()
 
         #TODO: improve this very simplistic approach to error handling

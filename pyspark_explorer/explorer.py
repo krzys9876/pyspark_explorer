@@ -177,10 +177,10 @@ class Explorer:
         return self.__file_info__(self.spark._jvm.org.apache.hadoop.fs.Path(path))
 
 
-    def read_file(self, file_format: str, path: str) -> DataFrameTable | None:
+    def read_file(self, file_format: str, path: str, filter: str) -> DataFrameTable | None:
         try:
             options = self.spark_options[file_format] if file_format in self.spark_options else {}
-            df = self.spark.read.options(**options).format(file_format).load(path)
+            df = self.spark.read.options(**options).format(file_format).load(path).filter(filter)
             tab = DataFrameTable(df.schema.fields, df.take(self.get_take_rows()), True)
         except Exception as e:
             tab = None
