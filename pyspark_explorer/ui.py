@@ -262,12 +262,11 @@ class DataApp(App):
         await self.push_screen(BusyScreen())
         await asyncio.sleep(1)
         self.refresh()
-        tab = self.explorer.read_file(file_type, path, spark_filter)
+        tab, result_descr = self.explorer.read_file(file_type, path, spark_filter)
         await self.pop_screen()
 
-        #TODO: improve this very simplistic approach to error handling
         if tab is None:
-            self.notify(f"Error occurred reading file: {path}\nSee log file for details (user_home/.pyspark-explorer)")
+            self.notify(f"Error occurred reading file: {path}\nSee log file for details (user_home/.pyspark-explorer)\n{result_descr}")
         else:
             self.orig_tab = tab
             self.current_file = path

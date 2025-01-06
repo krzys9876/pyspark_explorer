@@ -78,7 +78,7 @@ These are json files so you are free to edit them.
 
 # Spark limitations
 
-Note that you will not be able to open any JSON file - only those with _correct_ structure can be viewed. If you try to open a file which has a unacceptable structure, Spark will throw an error like this:
+Note that you will not be able to open any JSON file - only those with _correct_ structure can be viewed. If you try to open a file which has an unacceptable structure, Spark will throw an error, e.g.:
 
     Since Spark 2.3, the queries from raw JSON/CSV files are disallowed when the
     referenced columns only include the internal corrupt record column
@@ -88,5 +88,15 @@ Note that you will not be able to open any JSON file - only those with _correct_
     Instead, you can cache or save the parsed results and then send the same query.
     For example, val df = spark.read.schema(schema).csv(file).cache() and then
     df.filter($"_corrupt_record".isNotNull).count().
+
+or e.g.
+
+    [COLUMN_ALREADY_EXISTS] The column `event` already exists. Consider to choose another name or rename the existing column.
+
+or e.g.
+
+    'NoneType' object has no attribute '__fields__'
+
+etc.
 
 You can find the log file in your home directory (_.pyspark-explorer_ subdirectory).

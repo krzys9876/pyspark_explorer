@@ -182,18 +182,21 @@ class Explorer:
         return self.__file_info__(self.spark._jvm.org.apache.hadoop.fs.Path(path))
 
 
-    def read_file(self, file_format: str, path: str, filter: str) -> DataFrameTable | None:
+    def read_file(self, file_format: str, path: str, filter: str) -> (DataFrameTable | None, str):
+        result_descr = ""
         try:
             options = self.spark_options[file_format] if file_format in self.spark_options else {}
             df = self.spark.read.options(**options).format(file_format).load(path).filter(filter)
             tab = DataFrameTable(df.schema.fields, df.take(self.get_take_rows()), True)
         except Exception as e:
             dt = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            result_descr = f"{dt}\n{path}\n{str(e)}"
             with open(__spark_errors_log_file__(), "a") as f:
-                f.writelines([dt,"\n",path,"\n",str(e),"\n"])
+                f.write(f"{result_descr}\n")
             tab = None
 
-        return tab
+
+        return tab, result_descr
 
 
     def save_params(self) -> None:
