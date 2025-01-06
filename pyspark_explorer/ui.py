@@ -27,6 +27,7 @@ class DataApp(App):
         Binding(key="f", action="read_file", description="Read file"),
         Binding(key="F", action="read_file_with_filter", description="with filter"),
         Binding(key="r", action="reload_table", description="Reset data view"),
+        Binding(key="b", action="drill_up", description="Previous data view"),
         Binding(key="u", action="refresh_table", description="Refresh view", show=False),
         Binding(key="o", action="change_options", description="Options"),
         Binding(key="s", action="save_options", description="Save config"),
@@ -41,6 +42,7 @@ class DataApp(App):
         super(DataApp, self).__init__(**kwargs)
         self.orig_tab: DataFrameTable = DataFrameTable([],[])
         self.tab = self.orig_tab
+        self.tab_stack: [dict] = []
         self.explorer = explorer
         self.file_type = self.FILE_TYPES[0]
         self.current_file = None
@@ -153,11 +155,11 @@ class DataApp(App):
 
     @work
     async def action_reload_table(self) -> None:
-        self.notify("refreshing...")
         self.tab = self.orig_tab
+        # reset stack
+        self.tab_stack = [{"tab": self.tab, "row": 0, "col": 0}]
         self.load_data()
         self.load_structure()
-        #self.query_one(LoadingIndicator).display = False
 
 
     def action_refresh_table(self) -> None:
@@ -194,7 +196,7 @@ class DataApp(App):
             self.__refresh_current_directory__(res)
 
 
-    def __refresh_current_directory__(self, filter: str) -> None:
+    def __refresh_current_directory__(self, file_filter: str) -> None:
         current_file = self.__files_tree__().cursor_node
         if current_file is None:
             self.notify(f"No file/directory selected")
@@ -207,7 +209,7 @@ class DataApp(App):
         self.set_focus(self.__files_tree__())
         self.notify(f"Refreshing {current_file.data['name']}") # {current_file.data}")
         path = current_file.data["full_path"]
-        dir_contents = self.explorer.read_directory(path,filter)
+        dir_contents = self.explorer.read_directory(path,file_filter)
         current_file.remove_children()
         for f in dir_contents:
             label = self.__file_label__(f)
@@ -314,7 +316,7 @@ class DataApp(App):
 
 
     @on(DataTable.CellHighlighted, "#main_table")
-    def cell_highlighted(self, event: DataTable.CellHighlighted):
+    def cell_highlighted(self, _: DataTable.CellHighlighted):
         x, y, column, cell = self.__selected_cell_info__()
         pos_txt = f"{x+1}/{y+1}"
         cell_dv = cell["display_value"]
@@ -329,15 +331,35 @@ class DataApp(App):
 
 
     @on(DataTable.CellSelected, "#main_table")
-    def cell_selected(self, event: DataTable.CellSelected):
+    def cell_selected(self, _: DataTable.CellSelected):
         x, y, _, _ = self.__selected_cell_info__()
         embedded_tab = extract_embedded_table(self.tab, x, y, expand_structs = True)
         if embedded_tab is None:
             self.notify("no further details available")
         else:
-            self.notify(f"drilling into details: {len(embedded_tab.row_values)} row(s)")
+            self.notify(f"drilling down into details: {len(embedded_tab.row_values)} row(s)")
             self.tab = embedded_tab
+            self.tab_stack.append({"tab": embedded_tab, "row": y, "col": x})
             self.load_data()
+
+
+    def action_drill_up(self) -> None:
+        if len(self.tab_stack)>=2:
+            # retrieve return cursor position
+            row: int = self.tab_stack[-1]["row"]
+            col: int = self.tab_stack[-1]["col"]
+            # remove last tab info (tab is stored together with return cursor position)
+            self.tab_stack.pop()
+            # retrieve previous tab
+            self.tab = self.tab_stack[-1]["tab"]
+            self.notify(f"drilling up to previous view")
+            self.load_data()
+            # move cursor to return position
+            main_tab = self.__main_table__()
+            main_tab.move_cursor(row = row, column = col)
+
+        else:
+            self.notify(f"this is the top view of the current file")
 
 
     @on(Tree.NodeHighlighted, "#file_tree")
