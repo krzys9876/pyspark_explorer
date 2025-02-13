@@ -21,7 +21,7 @@ def run() -> None:
              .getOrCreate())
 
     explorer = Explorer(spark, sys.argv[1] if len(sys.argv)>1 else "/")
-    app = ui.DataApp(explorer)
+    app = ui.PysparkExplorerUI(explorer)
     app.run()
 
     spark.stop()

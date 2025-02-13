@@ -14,7 +14,7 @@ from pyspark_explorer.ui_filters_screen import FiltersScreen
 from pyspark_explorer.ui_options_screen import OptionsScreen
 
 
-class DataApp(App):
+class PysparkExplorerUI(App):
 
     FILE_TYPES = ["PARQUET", "JSON", "CSV"]
 
@@ -39,7 +39,7 @@ class DataApp(App):
 
 
     def __init__(self, explorer: Explorer, **kwargs):
-        super(DataApp, self).__init__(**kwargs)
+        super(PysparkExplorerUI, self).__init__(**kwargs)
         self.orig_tab: DataFrameTable = DataFrameTable([],[])
         self.tab = self.orig_tab
         self.tab_stack: [dict] = []
@@ -101,6 +101,9 @@ class DataApp(App):
 
 
     def on_mount(self) -> None:
+        self.title = "Spark File Explorer"
+        self.sub_title = "explore files, structure and data"
+
         self.__read_base_path__()
         self.__refresh_top_status__()
         self.action_reload_table(refresh_view = False)
@@ -141,7 +144,7 @@ class DataApp(App):
         else:
             added = node.add(f"{field_info['name']} ({field_info['type']})", data=field_info)
             for subfield in field_info["subfields"]:
-                DataApp.__add_subfields_to_tree(subfield, added)
+                PysparkExplorerUI.__add_subfields_to_tree(subfield, added)
             added.expand()
 
 
