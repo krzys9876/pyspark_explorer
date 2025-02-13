@@ -103,8 +103,8 @@ class DataApp(App):
     def on_mount(self) -> None:
         self.__read_base_path__()
         self.__refresh_top_status__()
-        self.set_focus(self.__files_tree__())
-        self.action_reload_table()
+        self.action_reload_table(refresh_view = False)
+        self.__tab_container__().active = "files_pane"
 
 
     def __read_base_path__(self) -> None:
@@ -123,14 +123,15 @@ class DataApp(App):
             self.notify(f"{self.file_type} selected")
 
 
-    def load_data(self) -> None:
+    def load_data(self, refresh_view: bool = True) -> None:
         data_table = self.__main_table__()
         data_table.loading = True
         data_table.clear(columns=True)
         data_table.add_columns(*self.tab.column_names)
         data_table.add_rows(self.tab.row_values)
         data_table.loading = False
-        self.action_refresh_table()
+        if refresh_view:
+            self.action_refresh_table()
 
 
     @staticmethod
@@ -154,17 +155,18 @@ class DataApp(App):
             self.__add_subfields_to_tree(f, tree.root)
 
     @work
-    async def action_reload_table(self) -> None:
+    async def action_reload_table(self, refresh_view: bool = True) -> None:
         self.tab = self.orig_tab
         # reset stack
         self.tab_stack = [{"tab": self.tab, "row": 0, "col": 0}]
-        self.load_data()
+        self.load_data(refresh_view)
         self.load_structure()
 
 
     def action_refresh_table(self) -> None:
         # experimental - refresh by getting table out of focus and focus again, no other method worked (refresh etc.)
-        self.set_focus(self.__struct_tree__())
+        self.set_focus(self.__tab_container__())
+        self.__tab_container__().active = "struct_pane"
         self.set_focus(self.__main_table__())
 
 
