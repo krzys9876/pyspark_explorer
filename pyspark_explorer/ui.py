@@ -1,5 +1,6 @@
 import asyncio
 
+from rich.text import Text
 from textual import on, work
 from textual.app import App, ComposeResult
 from textual.binding import Binding
@@ -326,7 +327,7 @@ class PysparkExplorerUI(App):
         pos_txt = f"{x+1}/{y+1}"
         cell_dv = cell["display_value"]
         dv_status = self.__bottom_mid_status__()
-        dv_status.update(cell_dv)
+        dv_status.update(Text(cell_dv))
         status_text_flat = f"{column['name']} | {column['type']}/{column['field_type'].typeName()} | {column['kind']}"
         if column["type"]=="ArrayType":
             status_text_flat = f"{status_text_flat} | {len(cell['value'])} inner row(s)"
