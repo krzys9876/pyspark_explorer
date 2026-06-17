@@ -10,7 +10,10 @@ from pyspark_explorer.data_table import DataFrameTable
 
 def __config_dir__() -> str:
     home_dir = os.path.expanduser('~')
-    return os.path.join(home_dir, ".pyspark-explorer")
+    path = os.path.join(home_dir, ".spark-explorer")
+    if not os.path.exists(path):
+        os.mkdir(path)
+    return path
 
 
 def __ensure_config_dir_exists__() -> None:
