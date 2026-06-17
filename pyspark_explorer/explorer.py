@@ -78,13 +78,15 @@ class Explorer:
         # load params from file (if exists)
         self.load_params()
         # create spark session
-        self.spark = (SparkSession.builder
-                      .master("local[2]")
+        spark_builder = (SparkSession.builder
                       # ERRORS will be briefly displayed on screen if log4j.properties file does not exist or does not forward logs to a file
                       .config("spark.log.level", "ERROR")
-                      .config("spark.driver.extraJavaOptions", "-Dlog4j.configuration=file:log4j.properties")
-                      .appName("pyspark_explorer")
-                      .getOrCreate())
+                      .config("spark.driver.extraJavaOptions", "-Dlog4j.configuration=file:log4j.properties"))
+        for (k,v) in self.spark_options.get("config",{}).items():
+            print(f"Applying Spark option: {k}={v}")
+            spark_builder.config(k,v)
+
+        self.spark = spark_builder.appName("pyspark_explorer").getOrCreate()
 
         self.fs = self.spark._jvm.org.apache.hadoop.fs.FileSystem.get(self.spark._jsc.hadoopConfiguration())
 
@@ -101,7 +103,11 @@ class Explorer:
 
     DEFAULT_SPARK_OPTIONS = {
         "CSV": {"header": "false", "dateFormat": "yyyy-MM-dd", "timestampFormat": "yyyy-MM-dd HH:mm:ss", "delimiter": ";"},
-        "JSON": {"dateFormat": "yyyy-MM-dd", "timestampFormat": "yyyy-MM-dd HH:mm:ss"}
+        "JSON": {"dateFormat": "yyyy-MM-dd", "timestampFormat": "yyyy-MM-dd HH:mm:ss"},
+        "config": {
+            "spark.master": "local[1]",
+            "spark.driver.memory": "1g"
+        }
     }
 
     DEFAULT_FILE_FILTERS = {"filters": ["*"]}

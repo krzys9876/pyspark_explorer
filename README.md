@@ -76,6 +76,51 @@ Default path is set to /, which represents local root filesystem and works fine 
 Configuration files are saved to your home directory (_.pyspark-explorer_ subdirectory). 
 These are json files so you are free to edit them.
 
+# Configuration
+
+You may configure the program by creating JSON files in the _.pyspark-explorer_ directory.
+
+The default values are stored under _DEFAULTxxxx_ global variables. You may override them by creating the following files:
+    
+### config.json
+
+    {
+        "base_path": "/",
+        "file_limit": 300,
+        "take_rows": 1000,
+        "sort_files_desc": False,
+        "sort_dirs_as_files": False,
+    }
+
+### spark-options.json
+
+    {
+        "CSV": {"header": "false", "dateFormat": "yyyy-MM-dd", "timestampFormat": "yyyy-MM-dd HH:mm:ss", "delimiter": ";"},
+        "JSON": {"dateFormat": "yyyy-MM-dd", "timestampFormat": "yyyy-MM-dd HH:mm:ss"},
+        "config": {
+            "spark.master": "local[1]",
+            "spark.driver.memory": "1g"
+        }
+    }
+
+### file-filters.json
+    
+    {"filters": ["*"]}
+
+### spark-filters.json
+
+    {"filters": ["1=1"]}
+
+So for example if you want to filter large files, you may wish want to increase memory limit from 1G to 8G and CPUs 
+from 1 to 2. In such case create the _spark-options.json_ file with the following contents:
+
+    {
+      "config": {
+        "spark.master": "local[2]",
+        "spark.driver.memory": "8g"
+      }
+    }
+
 # Spark limitations
 
 Note that you will not be able to open any JSON file - only those with _correct_ structure can be viewed. If you try to open a file which has an unacceptable structure, Spark will throw an error, e.g.:
