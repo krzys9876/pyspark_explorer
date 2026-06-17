@@ -12,16 +12,9 @@ def run() -> None:
     if os.getenv("SPARK_LOCAL_IP") is None:
         os.environ["SPARK_LOCAL_IP"] = "127.0.0.1"
 
-    spark = (SparkSession.builder
-             .master("local[2]")
-             # ERRORS will be briefly displayed on screen if log4j.properties file does not exist or does not forward logs to a file
-             .config("spark.log.level", "ERROR")
-             .config("spark.driver.extraJavaOptions", "-Dlog4j.configuration=file:log4j.properties")
-             .appName("pyspark_explorer")
-             .getOrCreate())
-
-    explorer = Explorer(spark, sys.argv[1] if len(sys.argv)>1 else "/")
+    explorer = Explorer(sys.argv[1] if len(sys.argv)>1 else "/")
     app = ui.PysparkExplorerUI(explorer)
     app.run()
 
-    spark.stop()
+    # Don't forget to stop spark session
+    explorer.stop()

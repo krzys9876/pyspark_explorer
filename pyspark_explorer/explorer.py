@@ -68,9 +68,7 @@ def __human_readable_size__(size: int) -> str:
 
 
 class Explorer:
-    def __init__(self, spark: SparkSession, base_path: str) -> None:
-        self.spark = spark
-        self.fs = spark._jvm.org.apache.hadoop.fs.FileSystem.get(spark._jsc.hadoopConfiguration())
+    def __init__(self, base_path: str) -> None:
         # default params
         self.params = self.DEFAULT_PARAMS.copy()
         self.params["base_path"] = base_path
@@ -79,7 +77,19 @@ class Explorer:
         self.spark_filters = self.DEFAULT_SPARK_FILTERS.copy()
         # load params from file (if exists)
         self.load_params()
+        # create spark session
+        self.spark = (SparkSession.builder
+                      .master("local[2]")
+                      # ERRORS will be briefly displayed on screen if log4j.properties file does not exist or does not forward logs to a file
+                      .config("spark.log.level", "ERROR")
+                      .config("spark.driver.extraJavaOptions", "-Dlog4j.configuration=file:log4j.properties")
+                      .appName("pyspark_explorer")
+                      .getOrCreate())
 
+        self.fs = self.spark._jvm.org.apache.hadoop.fs.FileSystem.get(self.spark._jsc.hadoopConfiguration())
+
+    def stop(self) -> None:
+        self.spark.stop()
 
     DEFAULT_PARAMS = {
             "base_path": "/",
